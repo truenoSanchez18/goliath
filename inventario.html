@@ -1,0 +1,784 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Inventario GOLIATH — ISMERELY</title>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;700;900&display=swap" rel="stylesheet">
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+<style>
+:root{--bg:#0a0a0a;--card:#111;--card2:#161616;--border:#222;--text:#d0d0d0;--sub:#555;--accent:#e65100;--accent2:#ff6d00;--green:#2e7d32;--red:#c62828;--amber:#f57f17}
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+body{font-family:'Inter',sans-serif;background:var(--bg);color:var(--text);font-size:13px;min-height:100vh}
+.hdr{display:flex;align-items:center;justify-content:space-between;padding:0 24px;height:56px;background:#0d0d0d;border-bottom:1px solid var(--border);position:sticky;top:0;z-index:100}
+.hdr-left{display:flex;align-items:center;gap:16px}
+.hdr-logo{font-size:18px;font-weight:900;color:#fff;letter-spacing:-0.5px}
+.hdr-logo span{color:var(--accent)}
+.back-btn{color:var(--sub);font-size:12px;text-decoration:none;display:flex;align-items:center;gap:4px;transition:color .2s}
+.back-btn:hover{color:#fff}
+.hdr-right{display:flex;gap:8px;align-items:center}
+.btn-exp{background:transparent;border:1px solid var(--border);color:var(--sub);padding:6px 12px;border-radius:6px;cursor:pointer;font-size:12px;font-family:inherit;transition:all .2s}
+.btn-exp:hover{border-color:var(--accent);color:var(--accent)}
+.tabs{display:flex;gap:0;border-bottom:1px solid var(--border);background:#0d0d0d;padding:0 24px;position:sticky;top:56px;z-index:99;overflow-x:auto}
+.tab{padding:14px 20px;font-size:13px;font-weight:600;color:var(--sub);cursor:pointer;border-bottom:2px solid transparent;transition:all .2s;white-space:nowrap}
+.tab.on{color:#fff;border-bottom-color:var(--accent)}
+.tab:hover:not(.on){color:var(--text)}
+.page{display:none;padding:24px;max-width:1400px;margin:0 auto}
+.page.on{display:block}
+.toolbar{display:flex;gap:10px;align-items:center;margin-bottom:20px;flex-wrap:wrap}
+.srch{background:var(--card);border:1px solid var(--border);border-radius:8px;padding:9px 14px;color:var(--text);font-size:13px;font-family:inherit;width:260px;outline:none;transition:border-color .2s}
+.srch:focus{border-color:var(--accent)}
+.filter-btns{display:flex;gap:6px;flex-wrap:wrap}
+.fb{background:var(--card);border:1px solid var(--border);border-radius:6px;padding:6px 12px;color:var(--sub);font-size:12px;cursor:pointer;font-family:inherit;transition:all .2s}
+.fb.on,.fb:hover{background:var(--accent);border-color:var(--accent);color:#fff}
+.btn-add{background:var(--accent);border:none;border-radius:8px;padding:9px 18px;color:#fff;font-size:13px;font-weight:700;cursor:pointer;font-family:inherit;margin-left:auto;transition:background .2s}
+.btn-add:hover{background:var(--accent2)}
+.prod-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(210px,1fr));gap:14px}
+.prod-card{background:var(--card);border:1px solid var(--border);border-radius:12px;overflow:hidden;transition:border-color .2s}
+.prod-card:hover{border-color:#333}
+.prod-card.no-stock{opacity:.5}
+.prod-img{width:100%;height:140px;object-fit:cover;background:#0d0d0d;display:block}
+.prod-img-ph{width:100%;height:140px;background:var(--card2);display:flex;align-items:center;justify-content:center;font-size:40px}
+.prod-body{padding:12px}
+.prod-linea{font-size:10px;font-weight:700;letter-spacing:2px;text-transform:uppercase;margin-bottom:6px}
+.l-ftelym{color:#42a5f5}.l-vybes{color:#ab47bc}.l-bienestar{color:#66bb6a}.l-avancely{color:#ffa726}
+.prod-name{font-size:13px;font-weight:700;color:#fff;margin-bottom:8px;line-height:1.3}
+.prod-precio{font-size:12px;color:var(--sub);margin-bottom:10px}
+.prod-precio strong{color:var(--text)}
+.badges{display:flex;gap:5px;flex-wrap:wrap;margin-bottom:12px}
+.badge{font-size:10px;font-weight:700;padding:3px 8px;border-radius:100px;white-space:nowrap}
+.b-stock{background:rgba(46,125,50,.2);color:#66bb6a;border:1px solid rgba(46,125,50,.3)}
+.b-stock.empty{background:rgba(198,40,40,.15);color:#ef9a9a;border-color:rgba(198,40,40,.3)}
+.b-inv{background:rgba(230,81,0,.15);color:#ffb74d;border:1px solid rgba(230,81,0,.3)}
+.b-dias.ok{background:rgba(102,187,106,.15);color:#66bb6a;border:1px solid rgba(102,187,106,.3)}
+.b-dias.warn{background:rgba(245,127,23,.15);color:#ffca28;border:1px solid rgba(245,127,23,.3)}
+.b-dias.danger{background:rgba(198,40,40,.15);color:#ef9a9a;border:1px solid rgba(198,40,40,.3)}
+.prod-btns{display:grid;grid-template-columns:1fr 1fr;gap:6px}
+.btn-ent{background:rgba(46,125,50,.15);border:1px solid rgba(46,125,50,.3);color:#66bb6a;border-radius:6px;padding:7px;font-size:12px;font-weight:700;cursor:pointer;font-family:inherit;transition:all .2s}
+.btn-ent:hover{background:rgba(46,125,50,.3)}
+.btn-ven{background:rgba(230,81,0,.15);border:1px solid rgba(230,81,0,.3);color:#ffb74d;border-radius:6px;padding:7px;font-size:12px;font-weight:700;cursor:pointer;font-family:inherit;transition:all .2s}
+.btn-ven:hover{background:rgba(230,81,0,.3)}
+.sum-bar{display:grid;grid-template-columns:repeat(3,1fr);gap:14px;margin-bottom:20px}
+.sum-card{background:var(--card);border:1px solid var(--border);border-radius:10px;padding:16px 20px}
+.sum-card .lbl{font-size:10px;font-weight:700;letter-spacing:2px;text-transform:uppercase;color:var(--sub);margin-bottom:6px}
+.sum-card .val{font-size:22px;font-weight:900;color:#fff}
+.val.green{color:#66bb6a}.val.orange{color:#ffb74d}
+.tbl-wrap{background:var(--card);border:1px solid var(--border);border-radius:10px;overflow:hidden}
+.tbl-head{display:flex;align-items:center;justify-content:space-between;padding:14px 16px;border-bottom:1px solid var(--border)}
+.tbl-head h3{font-size:14px;font-weight:700;color:#fff}
+table{width:100%;border-collapse:collapse}
+th{text-align:left;padding:10px 14px;font-size:11px;font-weight:700;letter-spacing:1px;text-transform:uppercase;color:var(--sub);border-bottom:1px solid var(--border);background:var(--card2)}
+td{padding:10px 14px;border-bottom:1px solid var(--border);font-size:12px;color:var(--text);vertical-align:middle}
+tr:last-child td{border-bottom:none}
+tr:hover td{background:rgba(255,255,255,.02)}
+.td-del{background:transparent;border:none;color:var(--sub);cursor:pointer;font-size:14px;padding:4px 8px;border-radius:4px;transition:all .2s}
+.td-del:hover{background:rgba(198,40,40,.2);color:#ef9a9a}
+.empty-st{text-align:center;padding:60px 20px;color:var(--sub)}
+.empty-st .ico{font-size:48px;display:block;margin-bottom:12px}
+.dash-cards{display:grid;grid-template-columns:repeat(4,1fr);gap:14px;margin-bottom:24px}
+.dash-card{background:var(--card);border:1px solid var(--border);border-radius:10px;padding:18px 20px}
+.dash-card .lbl{font-size:10px;font-weight:700;letter-spacing:2px;text-transform:uppercase;color:var(--sub);margin-bottom:8px}
+.dash-card .val{font-size:26px;font-weight:900;color:#fff;line-height:1}
+.dash-card .sub{font-size:11px;color:var(--sub);margin-top:4px}
+.charts-row{display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-bottom:24px}
+.chart-box{background:var(--card);border:1px solid var(--border);border-radius:10px;padding:20px}
+.chart-box h3{font-size:13px;font-weight:700;color:#fff;margin-bottom:16px}
+.chart-box canvas{max-height:280px}
+.btn-analizar{background:rgba(230,81,0,.15);border:1px solid rgba(230,81,0,.3);color:var(--accent2);border-radius:6px;padding:5px 12px;font-size:11px;font-weight:700;cursor:pointer;font-family:inherit;transition:all .2s}
+.btn-analizar:hover{background:rgba(230,81,0,.3)}
+.stancados-tag{display:inline-block;background:rgba(198,40,40,.15);color:#ef9a9a;font-size:11px;font-weight:700;padding:2px 8px;border-radius:100px;margin-left:8px}
+.ai-hdr{background:var(--card);border:1px solid var(--border);border-radius:10px;padding:16px 20px;margin-bottom:16px;display:flex;align-items:center;gap:14px}
+.ai-avatar{width:44px;height:44px;background:linear-gradient(135deg,var(--accent),#ff6d00);border-radius:10px;display:flex;align-items:center;justify-content:center;font-size:20px;flex-shrink:0}
+.ai-info h3{font-size:15px;font-weight:700;color:#fff}
+.ai-info p{font-size:12px;color:var(--sub);margin-top:2px}
+.btn-scan{background:var(--accent);border:none;border-radius:8px;padding:9px 18px;color:#fff;font-size:13px;font-weight:700;cursor:pointer;font-family:inherit;margin-left:auto;transition:background .2s}
+.btn-scan:hover{background:var(--accent2)}
+.ai-chat{background:var(--card);border:1px solid var(--border);border-radius:10px;overflow:hidden;display:flex;flex-direction:column;height:calc(100vh - 290px);min-height:420px}
+.ai-msgs{flex:1;overflow-y:auto;padding:16px;display:flex;flex-direction:column;gap:12px}
+.ai-m{max-width:86%;padding:12px 16px;border-radius:10px;font-size:13px;line-height:1.7;white-space:pre-wrap}
+.ai-m.user{background:var(--accent);color:#fff;align-self:flex-end;border-radius:10px 10px 2px 10px}
+.ai-m.bot{background:var(--card2);border:1px solid var(--border);color:var(--text);align-self:flex-start;border-radius:10px 10px 10px 2px}
+.ai-m.typing{color:var(--sub);font-size:12px;border:none;background:transparent}
+.btn-trueno{display:inline-flex;align-items:center;gap:6px;background:rgba(255,109,0,.15);border:1px solid rgba(255,109,0,.4);color:var(--accent2);border-radius:6px;padding:7px 14px;font-size:12px;font-weight:700;cursor:pointer;font-family:inherit;margin-top:8px;align-self:flex-start;transition:all .2s}
+.btn-trueno:hover{background:rgba(255,109,0,.3)}
+.ai-inp-area{display:flex;gap:8px;padding:12px;border-top:1px solid var(--border);background:var(--card2)}
+.ai-inp{flex:1;background:var(--card);border:1px solid var(--border);border-radius:8px;padding:10px 14px;color:var(--text);font-size:13px;font-family:inherit;outline:none;transition:border-color .2s}
+.ai-inp:focus{border-color:var(--accent)}
+.ai-send{background:var(--accent);border:none;border-radius:8px;padding:10px 18px;color:#fff;font-size:16px;cursor:pointer;transition:background .2s}
+.ai-send:hover{background:var(--accent2)}
+.modal-ov{position:fixed;inset:0;background:rgba(0,0,0,.8);z-index:1000;display:flex;align-items:center;justify-content:center;opacity:0;visibility:hidden;transition:all .2s;backdrop-filter:blur(4px)}
+.modal-ov.open{opacity:1;visibility:visible}
+.modal{background:var(--card);border:1px solid var(--border);border-radius:14px;padding:24px;width:100%;max-width:480px;max-height:90vh;overflow-y:auto}
+.modal h2{font-size:16px;font-weight:700;color:#fff;margin-bottom:20px}
+.fr{margin-bottom:14px}
+.fr label{display:block;font-size:11px;font-weight:700;letter-spacing:1px;text-transform:uppercase;color:var(--sub);margin-bottom:6px}
+.fr input,.fr select,.fr textarea{width:100%;background:var(--card2);border:1px solid var(--border);border-radius:8px;padding:9px 12px;color:var(--text);font-size:13px;font-family:inherit;outline:none;transition:border-color .2s}
+.fr input:focus,.fr select:focus,.fr textarea:focus{border-color:var(--accent)}
+.fr select option{background:var(--card2)}
+.fr textarea{resize:vertical;min-height:70px}
+.modal-btns{display:flex;gap:10px;justify-content:flex-end;margin-top:20px}
+.btn-cancel{background:transparent;border:1px solid var(--border);color:var(--sub);border-radius:8px;padding:9px 18px;font-size:13px;font-weight:600;cursor:pointer;font-family:inherit;transition:all .2s}
+.btn-cancel:hover{border-color:var(--text);color:var(--text)}
+.btn-save{background:var(--accent);border:none;border-radius:8px;padding:9px 18px;color:#fff;font-size:13px;font-weight:700;cursor:pointer;font-family:inherit;transition:background .2s}
+.btn-save:hover{background:var(--accent2)}
+.toast-el{position:fixed;bottom:24px;right:24px;background:#1a1a1a;border:1px solid var(--border);border-radius:8px;padding:12px 18px;font-size:13px;color:#fff;z-index:9999;opacity:0;transform:translateY(10px);transition:all .3s;pointer-events:none}
+.toast-el.show{opacity:1;transform:translateY(0)}
+@media(max-width:900px){.dash-cards{grid-template-columns:1fr 1fr}.charts-row{grid-template-columns:1fr}}
+@media(max-width:600px){.dash-cards{grid-template-columns:1fr 1fr}.prod-grid{grid-template-columns:1fr 1fr}.sum-bar{grid-template-columns:1fr}}
+@media print{
+  .hdr,.tabs,.toolbar,.prod-btns,.btn-exp,.btn-analizar,.ai-hdr,.modal-ov,.toast-el{display:none!important}
+  .page{display:block!important;padding:0}
+  #tab-disponibles{display:block!important}
+  body{background:#fff;color:#000}
+  .disp-tbl th,.disp-tbl td{color:#000;border-color:#ccc}
+  .disp-tbl th{background:#f5f5f5}
+  .disp-print-hdr{display:flex!important}
+}
+.disp-print-hdr{display:none;justify-content:space-between;align-items:flex-start;margin-bottom:16px;padding-bottom:12px;border-bottom:2px solid #333}
+.disp-toolbar{display:flex;gap:10px;align-items:center;margin-bottom:20px;flex-wrap:wrap}
+.btn-print{background:rgba(255,255,255,.06);border:1px solid var(--border);color:var(--text);padding:9px 18px;border-radius:8px;cursor:pointer;font-size:13px;font-weight:700;font-family:inherit;display:flex;align-items:center;gap:6px;transition:all .2s}
+.btn-print:hover{border-color:#555;color:#fff}
+.btn-wa-inv{background:rgba(37,211,102,.1);border:1px solid rgba(37,211,102,.3);color:#25d366;padding:9px 18px;border-radius:8px;cursor:pointer;font-size:13px;font-weight:700;font-family:inherit;display:flex;align-items:center;gap:6px;transition:all .2s}
+.btn-wa-inv:hover{background:rgba(37,211,102,.2)}
+.disp-tbl{width:100%;border-collapse:collapse;background:var(--card);border-radius:10px;overflow:hidden}
+.disp-tbl th{text-align:left;padding:10px 14px;font-size:11px;font-weight:700;letter-spacing:1px;text-transform:uppercase;color:var(--sub);border-bottom:1px solid var(--border);background:var(--card2)}
+.disp-tbl td{padding:10px 14px;border-bottom:1px solid var(--border);font-size:12px;color:var(--text);vertical-align:middle}
+.disp-tbl tr:last-child td{border-bottom:none}
+.disp-tbl tr:hover td{background:rgba(255,255,255,.02)}
+.disp-stock-tag{display:inline-block;padding:2px 8px;border-radius:100px;font-size:11px;font-weight:700}
+.dst-ok{background:rgba(46,125,50,.2);color:#66bb6a;border:1px solid rgba(46,125,50,.3)}
+.dst-empty{background:rgba(198,40,40,.15);color:#ef9a9a;border:1px solid rgba(198,40,40,.3)}
+</style>
+</head>
+<body>
+
+<div class="hdr">
+  <div class="hdr-left">
+    <a class="back-btn" href="cotizador-ismerely.html">&#8592; Cotizador</a>
+    <div class="hdr-logo">&#9889; GOLIATH <span>Inventario</span></div>
+  </div>
+  <div class="hdr-right">
+    <button class="btn-exp" onclick="exportarDatos()">&#128190; Exportar</button>
+    <label class="btn-exp" style="cursor:pointer">&#128194; Importar<input type="file" accept=".json" style="display:none" onchange="importarDatos(event)"></label>
+  </div>
+</div>
+
+<div class="tabs">
+  <div class="tab on" onclick="goTab('inv')">&#128230; Inventario</div>
+  <div class="tab" onclick="goTab('ventas')">&#128176; Ventas</div>
+  <div class="tab" onclick="goTab('dash')">&#128202; Dashboard</div>
+  <div class="tab" onclick="goTab('ai')">&#129504; Agente IA</div>
+  <div class="tab" onclick="goTab('disponibles')">&#128221; Disponibles</div>
+</div>
+
+<div class="page on" id="tab-inv">
+  <div class="toolbar">
+    <input class="srch" type="text" id="srch-inv" placeholder="Buscar producto..." oninput="renderInv()">
+    <div class="filter-btns">
+      <button class="fb on" onclick="setFiltro('Todas',this)">Todas</button>
+      <button class="fb" onclick="setFiltro('Ft-Elym',this)">Ft-Elym</button>
+      <button class="fb" onclick="setFiltro('Vybes',this)">Vybes</button>
+      <button class="fb" onclick="setFiltro('Bienestar Line',this)">Bienestar</button>
+      <button class="fb" onclick="setFiltro('Avancely Line',this)">Avancely</button>
+    </div>
+    <button class="btn-add" onclick="abrirEntrada(null)">+ Entrada de Stock</button>
+  </div>
+  <div class="prod-grid" id="prod-grid"></div>
+</div>
+
+<div class="page" id="tab-ventas">
+  <div class="sum-bar" id="ventas-sum"></div>
+  <div class="toolbar">
+    <input class="srch" type="text" id="srch-ventas" placeholder="Filtrar por producto o cliente..." oninput="renderVentas()">
+  </div>
+  <div class="tbl-wrap">
+    <div class="tbl-head"><h3>Historial de Ventas</h3></div>
+    <div id="ventas-tbl"></div>
+  </div>
+</div>
+
+<div class="page" id="tab-dash">
+  <div class="dash-cards" id="dash-cards"></div>
+  <div class="charts-row">
+    <div class="chart-box"><h3>&#128230; Top Productos Vendidos</h3><canvas id="chart-bar"></canvas></div>
+    <div class="chart-box"><h3>&#127849; Ventas por L&#237;nea</h3><canvas id="chart-donut"></canvas></div>
+  </div>
+  <div class="tbl-wrap">
+    <div class="tbl-head"><h3>&#9888;&#65039; Productos Estancados <span class="stancados-tag" id="stancados-n">0</span></h3></div>
+    <div id="stancados-tbl"></div>
+  </div>
+</div>
+
+<div class="page" id="tab-ai">
+  <div class="ai-hdr">
+    <div class="ai-avatar">&#129504;</div>
+    <div class="ai-info">
+      <h3>Carlos M&#233;ndez &#8212; Experto en Ventas</h3>
+      <p>20 a&#241;os vendiendo suplementos naturales &#183; Estratega ISMERELY</p>
+    </div>
+    <button class="btn-scan" onclick="analizarInventario()">&#128269; Analizar Inventario</button>
+  </div>
+  <div class="ai-chat">
+    <div class="ai-msgs" id="ai-msgs"></div>
+    <div class="ai-inp-area">
+      <input class="ai-inp" type="text" id="ai-inp" placeholder="Preguntale a Carlos..." onkeydown="if(event.key==='Enter')aiSend()">
+      <button class="ai-send" onclick="aiSend()">&#10148;</button>
+    </div>
+  </div>
+</div>
+
+<div class="page" id="tab-disponibles">
+  <div class="disp-print-hdr">
+    <div>
+      <h2 style="font-size:18px;font-weight:900;color:#000">&#9889; INVENTARIO DISPONIBLE &mdash; ISMERELY</h2>
+      <p style="font-size:12px;color:#555;margin-top:4px" id="disp-fecha-print"></p>
+    </div>
+    <div style="text-align:right;font-size:11px;color:#555">GOLIATH Sistema de Inventario</div>
+  </div>
+  <div class="disp-toolbar">
+    <button class="btn-print" onclick="imprimirInventario()">&#128438; Imprimir</button>
+    <button class="btn-wa-inv" onclick="enviarInventarioWA()">&#128242; Enviar por WhatsApp</button>
+    <label style="display:flex;align-items:center;gap:8px;font-size:12px;color:var(--sub);margin-left:auto;cursor:pointer">
+      <input type="checkbox" id="disp-solo-stock" onchange="renderDisponibles()" checked style="accent-color:var(--accent)">
+      Solo con stock
+    </label>
+  </div>
+  <div id="disp-wrap" style="background:var(--card);border:1px solid var(--border);border-radius:10px;overflow:hidden"></div>
+</div>
+
+<!-- MODAL ENTRADA -->
+<div class="modal-ov" id="m-entrada">
+  <div class="modal">
+    <h2>&#128229; Agregar Entrada de Stock</h2>
+    <div class="fr"><label>Producto</label><select id="e-prod" onchange="onEProd()"></select></div>
+    <div class="fr"><label>Unidades</label><input type="number" id="e-uds" min="1" value="1"></div>
+    <div class="fr"><label>Costo por unidad (MXN)</label><input type="number" id="e-costo" min="0" placeholder="Ej: 295"></div>
+    <div class="fr"><label>Fecha</label><input type="date" id="e-fecha"></div>
+    <div class="fr"><label>Notas</label><textarea id="e-notas" placeholder="Opcional..."></textarea></div>
+    <div class="modal-btns">
+      <button class="btn-cancel" onclick="closeModals()">Cancelar</button>
+      <button class="btn-save" onclick="guardarEntrada()">Guardar</button>
+    </div>
+  </div>
+</div>
+
+<!-- MODAL VENTA -->
+<div class="modal-ov" id="m-venta">
+  <div class="modal">
+    <h2>&#128176; Registrar Venta</h2>
+    <div class="fr"><label>Producto</label><select id="v-prod" onchange="onVProd()"></select></div>
+    <div class="fr"><label>Unidades</label><input type="number" id="v-uds" min="1" value="1"></div>
+    <div class="fr"><label>Precio de venta por unidad (MXN)</label><input type="number" id="v-precio" min="0"></div>
+    <div class="fr"><label>Nombre del cliente</label><input type="text" id="v-cliente" placeholder="Nombre completo"></div>
+    <div class="fr"><label>Tel&#233;fono del cliente</label><input type="text" id="v-tel" placeholder="Ej: 5512345678"></div>
+    <div class="fr"><label>Fecha</label><input type="date" id="v-fecha"></div>
+    <div class="modal-btns">
+      <button class="btn-cancel" onclick="closeModals()">Cancelar</button>
+      <button class="btn-save" onclick="guardarVenta()">Guardar Venta</button>
+    </div>
+  </div>
+</div>
+
+<div class="toast-el" id="toast-el"></div>
+
+<script>
+const GEMINI_KEY=""  // clave gestionada por el servidor;
+const OPENAI_KEY=""  // clave gestionada por el servidor;
+const CATALOGO=[{"id":"ft-elym-dtx-oxigen-polvo-250g","marca":"ISMERELY","activo":true,"producto":"Ft-Elym DTX OXIGEN","linea":"Ft-Elym","categoria":"Suplemento alimenticio","formato":"polvo","uso":"oral","descripcion":"Suplemento alimenticio en polvo a base de alga espirulina, alfalfa y apio.","ingredientes":["Calcio de coral","Vitamina C","Stevia","Alga espirulina","Alfalfa","Piña","Perejil","Té verde","Menta","Apio","Clorofila"],"beneficios":["Calcio de coral","Oxigenación","Vitamina C","Revitalización","Puede favorecer la descongestión nasal al mezclarlo con A-Cfú y bebida caliente","La vitamina C es esencial para fortalecer el sistema inmunológico, promueve la salud de la piel y facilita la absorción de hierro"],"modo_de_uso":"Disolver 5 g en 250 ml de agua fría o caliente y tomarlo durante el día.","habito_elym":"Mezclar DTX OXIGEN con A-Cfú a tu bebida caliente puede favorecer la descongestión nasal.","sabor":"Menta","presentaciones":[{"contenido":"250 g","precio":589.0,"moneda":"MXN","codigo":"PT788","pvn":228}],"imagenes":["https://sacmkbioimyzhiyleqdj.supabase.co/storage/v1/object/sign/Imagenes/hf_20260402_161428_720ea061-2c53-488d-8fb6-a114a40bc511.png?token=eyJraWQiOiJzdG9yYWdlLXVybC1zaWduaW5nLWtleV9jYWFhYzBmMi1jODQ0LTRkNzMtYjYzYy00Zjg3ZmUyODI4MDIiLCJhbGciOiJIUzI1NiJ9.eyJ1cmwiOiJJbWFnZW5lcy9oZl8yMDI2MDQwMl8xNjE0MjhfNzIwZWEwNjEtMmM1My00ODhkLThmYjYtYTExNGE0MGJjNTExLnBuZyIsImlhdCI6MTc3NTE0NjY3NywiZXhwIjoxODA2NjgyNjc3fQ.j29KzThxpr4MBkUEPrPJjY5Df0PAMh4pWD-UqNloXZI"]},{"id":"ft-elym-dtx-polvo-250g-mango","marca":"ISMERELY","activo":true,"producto":"Ft-Elym DTX","linea":"Ft-Elym","categoria":"Suplemento alimenticio","formato":"polvo","uso":"oral","descripcion":"Suplemento alimenticio en polvo a base de café verde, mango y té verde.","ingredientes":["Goji","Té verde","Café verde","Chá de bugre","Mango africano","Raíz de ocolmeca","Vitamina C","Vitamina B1","Vitamina B6"],"beneficios":["Linaza","Mango africano","Ligero","Optimiza","Su mezcla de vitaminas y antioxidantes será tu mejor aliado para comenzar tu día","Sus ingredientes naturales pueden favorecer la digestión"],"modo_de_uso":"Disolver 5 g en 250 ml de agua fría o caliente y tomarlo por la mañana o por la noche.","habito_elym":"Tómalo por la noche y disfruta de los resultados por la mañana.","sabor":"Mango","presentaciones":[{"contenido":"250 g","precio":589.0,"moneda":"MXN","codigo":"PT723","pvn":228}],"imagenes":["https://sacmkbioimyzhiyleqdj.supabase.co/storage/v1/object/sign/Imagenes/hf_20260402_162207_5387d317-98cc-4072-8978-5fd87fab1679.png?token=eyJraWQiOiJzdG9yYWdlLXVybC1zaWduaW5nLWtleV9jYWFhYzBmMi1jODQ0LTRkNzMtYjYzYy00Zjg3ZmUyODI4MDIiLCJhbGciOiJIUzI1NiJ9.eyJ1cmwiOiJJbWFnZW5lcy9oZl8yMDI2MDQwMl8xNjIyMDdfNTM4N2QzMTctOThjYy00MDcyLTg5NzgtNWZkODdmYWIxNjc5LnBuZyIsImlhdCI6MTc3NTE0NzAzNSwiZXhwIjoxODA2NjgzMDM1fQ.kOS0kd_hPkK2z48r4vXZNUceoVFgTWg3eCuqoZVddys"]},{"id":"ft-elym-dtx-oxigen-liquido","marca":"ISMERELY","activo":true,"producto":"Ft-Elym DTX OXIGEN","linea":"Ft-Elym","categoria":"Suplemento alimenticio","formato":"liquido","uso":"oral","descripcion":"Suplemento alimenticio líquido a base de alga espirulina, alfalfa y apio.","ingredientes":["Calcio de coral","Vitamina C","Stevia","Alga espirulina","Alfalfa","Piña","Perejil","Té verde","Menta","Apio","Clorofila"],"beneficios":["Calcio de coral","Vitamina C","Oxigenación","Revitalización","Su fuente activa de vitamina C es un poderoso antioxidante que puede bloquear parte del daño de los radicales libres","Puede favorecer a tu digestión al combinarse con A-Coff en bebida caliente"],"modo_de_uso":"Diluir 15 ml en 250 ml de agua fría y tomar antes de la comida.","habito_elym":"DTX OXIGEN con A-Coff en bebida caliente, puede favorecer a tu digestión.","sabor":null,"presentaciones":[{"contenido":"500 ml","precio":589.0,"moneda":"MXN","codigo":"PT725","pvn":228},{"contenido":"1 L","precio":949.0,"moneda":"MXN","codigo":"PT774","pvn":368}],"imagenes":["https://sacmkbioimyzhiyleqdj.supabase.co/storage/v1/object/sign/Imagenes/hf_20260402_162559_07a0dee9-65a9-4673-98c0-f3961d358335.png?token=eyJraWQiOiJzdG9yYWdlLXVybC1zaWduaW5nLWtleV9jYWFhYzBmMi1jODQ0LTRkNzMtYjYzYy00Zjg3ZmUyODI4MDIiLCJhbGciOiJIUzI1NiJ9.eyJ1cmwiOiJJbWFnZW5lcy9oZl8yMDI2MDQwMl8xNjI1NTlfMDdhMGRlZTktNjVhOS00NjczLTk4YzAtZjM5NjFkMzU4MzM1LnBuZyIsImlhdCI6MTc3NTE0NzI1NCwiZXhwIjoxODA2NjgzMjU0fQ.v0repopK88GwLN7SotAXs3sXczXeaqL_s6li4XXf_aM"]},{"id":"ft-elym-gel-corporal-300g","marca":"ISMERELY","activo":true,"producto":"Ft-Elym Gel Corporal","linea":"Ft-Elym","categoria":"Gel corporal","formato":"gel","uso":"topico","descripcion":"Gel corporal de uso tópico con ingredientes naturales pensado para masaje y apoyo corporal antes o después del entrenamiento.","ingredientes":["Colágeno","Vitamina E","Algas marinas","Hiedra","Limón","Menta","Naranja","Romero","Sábila","Coenzima Q10","Aceite esencial de toronja","Aceite esencial de frutas tropicales","Glicerina pura"],"beneficios":["Romero","Algas marinas","Sin parabenos","Aceites esenciales","Los ingredientes naturales de Ft-Elym Gel se convierten en un aliado perfecto para reducir, moldear y mejorar la circulación de tu cuerpo"],"modo_de_uso":"Aplicarse directamente en el área a tratar en forma de masaje suave después del baño o antes de hacer ejercicio.","habito_elym":"Perfecto para dar un masaje antes o después de un gran entrenamiento.","sabor":null,"presentaciones":[{"contenido":"300 g","precio":429.0,"moneda":"MXN","codigo":"PT726","pvn":166}],"imagenes":["https://sacmkbioimyzhiyleqdj.supabase.co/storage/v1/object/sign/Imagenes/hf_20260402_163026_0bfc48c8-a8f5-43ac-a085-d84e18c7a5cc.png?token=eyJraWQiOiJzdG9yYWdlLXVybC1zaWduaW5nLWtleV9jYWFhYzBmMi1jODQ0LTRkNzMtYjYzYy00Zjg3ZmUyODI4MDIiLCJhbGciOiJIUzI1NiJ9.eyJ1cmwiOiJJbWFnZW5lcy9oZl8yMDI2MDQwMl8xNjMwMjZfMGJmYzQ4YzgtYThmNS00M2FjLWEwODUtZDg0ZTE4YzdhNWNjLnBuZyIsImlhdCI6MTc3NTE0NzU3MSwiZXhwIjoxODA2NjgzNTcxfQ.GDv3-eiQea6cS1yPyPuJoFpx9MI8JifCyDKN2UaLopc","https://sacmkbioimyzhiyleqdj.supabase.co/storage/v1/object/sign/Imagenes/hf_20260402_163026_ceffc56c-da30-493b-8e5e-1576873912e0.png?token=eyJraWQiOiJzdG9yYWdlLXVybC1zaWduaW5nLWtleV9jYWFhYzBmMi1jODQ0LTRkNzMtYjYzYy00Zjg3ZmUyODI4MDIiLCJhbGciOiJIUzI1NiJ9.eyJ1cmwiOiJJbWFnZW5lcy9oZl8yMDI2MDQwMl8xNjMwMjZfY2VmZmM1NmMtZGEzMC00OTNiLThlNWUtMTU3Njg3MzkxMmUwLnBuZyIsImlhdCI6MTc3NTE0NzU5MiwiZXhwIjoxODA2NjgzNTkyfQ.h4Mz82OWOUbEsf3AqOMaTcrf4XWP-5oyO36M37tK9js"]},{"id":"ft-elym-caps-30-capsulas","marca":"ISMERELY","activo":true,"producto":"Ft-Elym Caps","linea":"Ft-Elym","categoria":"Suplemento alimenticio","formato":"capsulas","uso":"oral","descripcion":"Suplemento alimenticio en cápsula a base de mango africano, papaya y piña.","ingredientes":["Semilla de linaza","Cayena","Mango africano","Papaya","Lecitina de soya"],"beneficios":["Lecitina de soya","Mango africano","Buena digestión","Antioxidante","Su exclusiva mezcla de ingredientes naturales promueven la adecuada digestión y correcta absorción de nutrientes","El té verde es una gran fuente de antioxidantes"],"modo_de_uso":"Tomar una cápsula por la mañana o por la noche.","habito_elym":"Tomar una cápsula por la noche puede optimizar tu tránsito intestinal o por la mañana puede contribuir a tu saciedad.","sabor":null,"presentaciones":[{"contenido":"30 cápsulas","precio":589.0,"moneda":"MXN","codigo":"PT722","pvn":228}],"imagenes":["https://sacmkbioimyzhiyleqdj.supabase.co/storage/v1/object/sign/Imagenes/hf_20260402_163440_c3f250fd-90af-452e-8811-a08819302834.png?token=eyJraWQiOiJzdG9yYWdlLXVybC1zaWduaW5nLWtleV9jYWFhYzBmMi1jODQ0LTRkNzMtYjYzYy00Zjg3ZmUyODI4MDIiLCJhbGciOiJIUzI1NiJ9.eyJ1cmwiOiJJbWFnZW5lcy9oZl8yMDI2MDQwMl8xNjM0NDBfYzNmMjUwZmQtOTBhZi00NTJlLTg4MTEtYTA4ODE5MzAyODM0LnBuZyIsImlhdCI6MTc3NTE0NzgzOCwiZXhwIjoxODA2NjgzODM4fQ.yQ6hybJyRk2NEPFjDlGB4PeWGS6ABM3wMGY2dBcyolo"]},{"id":"ft-elym-pro-caps-30-capsulas","marca":"ISMERELY","activo":true,"producto":"Ft-Elym PRO Caps","linea":"Ft-Elym","categoria":"Suplemento alimenticio","formato":"capsulas","uso":"oral","descripcion":"Suplemento alimenticio en cápsula a base de café verde, frambuesa y té verde.","ingredientes":["Café verde","Moringa","Chá de bugre","Frambuesa","Calcio","Té verde","Estearato de magnesio"],"beneficios":["Café verde","Té verde","Antioxidante","Ligero","Despierta más ligero con Ft-Elym PRO Caps","Extracto de café verde puede ayudar en los procesos metabólicos","El té verde es una gran fuente de antioxidantes"],"modo_de_uso":"Tomar una cápsula por la mañana o por la noche.","habito_elym":"Tomar una cápsula por la noche puede optimizar tu tránsito intestinal o por la mañana puede contribuir a tu saciedad.","sabor":null,"presentaciones":[{"contenido":"30 cápsulas","precio":589.0,"moneda":"MXN","codigo":"PT720","pvn":228}],"imagenes":["https://sacmkbioimyzhiyleqdj.supabase.co/storage/v1/object/sign/Imagenes/hf_20260402_164124_7883abda-5e18-4114-ad5f-05f67741e0c1.png?token=eyJraWQiOiJzdG9yYWdlLXVybC1zaWduaW5nLWtleV9jYWFhYzBmMi1jODQ0LTRkNzMtYjYzYy00Zjg3ZmUyODI4MDIiLCJhbGciOiJIUzI1NiJ9.eyJ1cmwiOiJJbWFnZW5lcy9oZl8yMDI2MDQwMl8xNjQxMjRfNzg4M2FiZGEtNWUxOC00MTE0LWFkNWYtMDVmNjc3NDFlMGMxLnBuZyIsImlhdCI6MTc3NTE0ODQwNiwiZXhwIjoxODA2Njg0NDA2fQ.cQJRSd-W7BNbIVZmZyWGgQoXJXcpYuOF43LAX_vpz40"]},{"id":"ft-elym-t-pro-polvo-250g","marca":"ISMERELY","activo":true,"producto":"Ft-Elym T PRO","linea":"Ft-Elym","categoria":"Suplemento alimenticio","formato":"polvo","uso":"oral","descripcion":"Suplemento alimenticio en polvo a base de café verde, frambuesa y té verde.","ingredientes":["Vitamina B3","Café verde","Naranja agria","Chá de bugre","Té verde","Moringa","Frambuesa","Calcio de coral"],"beneficios":["Calcio de coral","Té verde","Detox","Ligero","Su mezcla de vitaminas y antioxidantes será tu mejor aliado para comenzar tu día","El té verde puede ayudar a mejorar el metabolismo","Puede aumentar la energía y promover la desinflamación"],"modo_de_uso":"Disolver 5 g en 250 ml de agua fría o caliente, tomarlo por la mañana o la noche.","habito_elym":"Disfrútalo por la noche con agua caliente y el jugo de un limón, puede favorecer el tránsito intestinal.","sabor":null,"presentaciones":[{"contenido":"250 g","precio":589.0,"moneda":"MXN","codigo":"PT721","pvn":228}],"imagenes":["https://sacmkbioimyzhiyleqdj.supabase.co/storage/v1/object/sign/Imagenes/hf_20260402_164544_9b314dfc-769a-4812-85a2-db5befadf749.png?token=eyJraWQiOiJzdG9yYWdlLXVybC1zaWduaW5nLWtleV9jYWFhYzBmMi1jODQ0LTRkNzMtYjYzYy00Zjg3ZmUyODI4MDIiLCJhbGciOiJIUzI1NiJ9.eyJ1cmwiOiJJbWFnZW5lcy9oZl8yMDI2MDQwMl8xNjQ1NDRfOWIzMTRkZmMtNzY5YS00ODEyLTg1YTItZGI1YmVmYWRmNzQ5LnBuZyIsImlhdCI6MTc3NTE0ODUwNSwiZXhwIjoxODA2Njg0NTA1fQ.Cmiem8StSkuehN79fq2rAEqf0kEGqPxlUwEGKo-Tzto"]},{"id":"ft-elym-dtx-shake-polvo-500g","marca":"ISMERELY","activo":true,"producto":"Ft-Elym DTX Shake","linea":"Ft-Elym","categoria":"Suplemento alimenticio","formato":"polvo","uso":"oral","descripcion":"Suplemento alimenticio en polvo tipo shake con proteína vegetal y calcio de coral. Disponible en 8 sabores.","ingredientes":[],"beneficios":["Proteína vegetal","Calcio de Coral","95 kcal por porción","9g de proteína por porción"],"modo_de_uso":null,"habito_elym":"Disfrútalo por la mañana después de tu entrenamiento y potencializa tu rendimiento.","sabores":["Chocolate-avellana","Capuchino-canela","Vainilla-galleta","Mango tango","Nuez dorada","Frutos rojos","Piña-coco","Plátano"],"presentaciones":[{"contenido":"500 g","sabor":"Chocolate-avellana","precio":589.0,"moneda":"MXN","codigo":"PT727","pvn":228},{"contenido":"500 g","sabor":"Capuchino-canela","precio":589.0,"moneda":"MXN","codigo":"PT728","pvn":228},{"contenido":"500 g","sabor":"Vainilla-galleta","precio":589.0,"moneda":"MXN","codigo":"PT729","pvn":228},{"contenido":"500 g","sabor":"Mango tango","precio":589.0,"moneda":"MXN","codigo":"PT730","pvn":228},{"contenido":"500 g","sabor":"Nuez dorada","precio":589.0,"moneda":"MXN","codigo":"PT731","pvn":228},{"contenido":"500 g","sabor":"Frutos rojos","precio":589.0,"moneda":"MXN","codigo":"PT732","pvn":228},{"contenido":"500 g","sabor":"Piña-coco","precio":589.0,"moneda":"MXN","codigo":"PT777","pvn":228},{"contenido":"500 g","sabor":"Plátano","precio":589.0,"moneda":"MXN","codigo":"PT794","pvn":228}],"imagenes":["https://sacmkbioimyzhiyleqdj.supabase.co/storage/v1/object/sign/Imagenes/hf_20260402_165054_41f6832f-a0b3-437a-9e12-15b6fe29170a.png?token=eyJraWQiOiJzdG9yYWdlLXVybC1zaWduaW5nLWtleV9jYWFhYzBmMi1jODQ0LTRkNzMtYjYzYy00Zjg3ZmUyODI4MDIiLCJhbGciOiJIUzI1NiJ9.eyJ1cmwiOiJJbWFnZW5lcy9oZl8yMDI2MDQwMl8xNjUwNTRfNDFmNjgzMmYtYTBiMy00MzdhLTllMTItMTViNmZlMjkxNzBhLnBuZyIsImlhdCI6MTc3NTE0OTI2NywiZXhwIjoxODA2Njg1MjY3fQ.wUmo-u0yNf_Sx-Rm1Z46rztcmc7_FsTmtS8-yUr0oqk"]},{"tipo":"separador_linea","linea":"Bienestar Line","descripcion":"En un mundo donde la salud es el motor de nuestra vida, hemos creado un sistema integral que te acompaña en cada paso del camino. Nuestro enfoque va más allá de lo físico, ofreciendo productos diseñados para equilibrar cuerpo, mente y emociones, y brindarte una vida más plena y saludable. Bienvenido a una nueva era de bienestar.","imagen":"https://sacmkbioimyzhiyleqdj.supabase.co/storage/v1/object/sign/Imagenes/hf_20260402_165442_9570e036-5f02-484c-8ace-241cabecf303.png?token=eyJraWQiOiJzdG9yYWdlLXVybC1zaWduaW5nLWtleV9jYWFhYzBmMi1jODQ0LTRkNzMtYjYzYy00Zjg3ZmUyODI4MDIiLCJhbGciOiJIUzI1NiJ9.eyJ1cmwiOiJJbWFnZW5lcy9oZl8yMDI2MDQwMl8xNjU0NDJfOTU3MGUwMzYtNWYwMi00ODRjLThhY2UtMjQxY2FiZWNmMzAzLnBuZyIsImlhdCI6MTc3NTE0OTM2NywiZXhwIjoxODA2Njg1MzY3fQ._Y6CcfqUfrNoTwnfvPdTfYTreQXdDEv1Hga0P6bu3FU"},{"id":"bienestar-mymlk-polvo-450g","marca":"ISMERELY","activo":true,"producto":"MYMlk","linea":"Bienestar Line","categoria":"Suplemento alimenticio","formato":"polvo","uso":"oral","descripcion":"Polvo soluble para preparar bebida de soya sabor natural. Sin lactosa y sin gluten.","ingredientes":["Vitamina A","Vitamina B3","Vitamina B2","Vitamina C","Aislado de soya","Aceite de soya","Fosfato de calcio","Monoglicéridos","Lecitina de soya","Zinc"],"beneficios":["Lecitina de soya","Vitamina C","Sin lactosa","Sin gluten","El fosfato de calcio favorece al mantenimiento del sistema óseo","Tomar leche de soya puede fortalecer los huesos y cuidar tu corazón","Opción nutritiva para quienes son intolerantes a la lactosa, perfecta para un estilo de vida saludable"],"modo_de_uso":"Disolver 2 cucharadas soperas (20 g) por cada 250 ml de agua.","habito_elym":"Potencializa el sabor de tus shakes con MYMlk y goza de un preparado lleno de energía.","sabor":"Natural","presentaciones":[{"contenido":"450 g","precio":229.0,"moneda":"MXN","codigo":"PT761","pvn":88}],"imagenes":["https://sacmkbioimyzhiyleqdj.supabase.co/storage/v1/object/sign/Imagenes/hf_20260402_170551_08cd7161-f915-433a-8ebe-13d9cd13c321.png?token=eyJraWQiOiJzdG9yYWdlLXVybC1zaWduaW5nLWtleV9jYWFhYzBmMi1jODQ0LTRkNzMtYjYzYy00Zjg3ZmUyODI4MDIiLCJhbGciOiJIUzI1NiJ9.eyJ1cmwiOiJJbWFnZW5lcy9oZl8yMDI2MDQwMl8xNzA1NTFfMDhjZDcxNjEtZjkxNS00MzNhLThlYmUtMTNkOWNkMTNjMzIxLnBuZyIsImlhdCI6MTc3NTE0OTY1MSwiZXhwIjoxODA2Njg1NjUxfQ.MjoJ-4fTIbLcTOG3hay8r02HXofaq--0rqZMktkZZrQ"]},{"id":"bienestar-origen-cafe-polvo","marca":"ISMERELY","activo":true,"producto":"Origen Café","linea":"Bienestar Line","categoria":"Suplemento alimenticio","formato":"polvo","uso":"oral","descripcion":"Suplemento alimenticio en polvo a base de cereza de café, noni y maitake.","ingredientes":["Cereza de café","Cocoa","Té verde","Noni","Maitake","Chaga","Shitake","Goji","Vitamina A","Vitamina B3","Vitamina C"],"beneficios":["Gracias a su potente fuente de antioxidantes pueden prevenir algunos tipos de daños en las células","El chaga es un poderoso aliado que puede fortalecer el sistema inmunológico","Puede aumentar la energía y ayudar a promover una salud óptima de manera natural"],"modo_de_uso":"Disolver 8 g en 250 ml de agua fría o caliente, tomarlo por la mañana o la noche.","habito_elym":null,"sabores":["Chai","Capuchino","Latte","Vainilla","Coco","Black"],"presentaciones":[{"contenido":"1 kg","sabor":null,"precio":1459.0,"moneda":"MXN","codigo":"PT737","pvn":566},{"contenido":"250 g","sabor":"Chai","precio":599.0,"moneda":"MXN","codigo":"PT738","pvn":228},{"contenido":"250 g","sabor":"Capuchino","precio":599.0,"moneda":"MXN","codigo":"PT739","pvn":228},{"contenido":"250 g","sabor":"Latte","precio":599.0,"moneda":"MXN","codigo":"PT740","pvn":228},{"contenido":"250 g","sabor":"Vainilla","precio":599.0,"moneda":"MXN","codigo":"PT741","pvn":228},{"contenido":"250 g","sabor":"Coco","precio":599.0,"moneda":"MXN","codigo":"PT780","pvn":228},{"contenido":"250 g","sabor":"Black","precio":599.0,"moneda":"MXN","codigo":"PT785","pvn":228}],"imagenes":["https://sacmkbioimyzhiyleqdj.supabase.co/storage/v1/object/sign/Imagenes/hf_20260402_170806_480e8096-6ff0-41f8-a4ef-32d22f605fdd.png?token=eyJraWQiOiJzdG9yYWdlLXVybC1zaWduaW5nLWtleV9jYWFhYzBmMi1jODQ0LTRkNzMtYjYzYy00Zjg3ZmUyODI4MDIiLCJhbGciOiJIUzI1NiJ9.eyJ1cmwiOiJJbWFnZW5lcy9oZl8yMDI2MDQwMl8xNzA4MDZfNDgwZTgwOTYtNmZmMC00MWY4LWE0ZWYtMzJkMjJmNjA1ZmRkLnBuZyIsImlhdCI6MTc3NTE0OTc5NywiZXhwIjoxODA2Njg1Nzk3fQ.xbHua8SS8JlSuh0ZLDdA4zGQBcRnTn-wLYcIZHPUdPI"]},{"id":"bienestar-ftx-plus-tabletas-30","marca":"ISMERELY","activo":true,"producto":"FTX Plus","linea":"Bienestar Line","categoria":"Suplemento alimenticio","formato":"tabletas","uso":"oral","descripcion":"Suplemento alimenticio en tableta a base de cartílago de tiburón, encino y guásimo.","ingredientes":["Estearato de magnesio","Vitamina C","Potasio","Vitamina E","Calcio de Coral","Vitamina D3","Cartílago de Tiburón","Encino","Sauce blanco","Guásimo"],"beneficios":["Calcio de Coral","Potasio","Antioxidante","Fuerza estructural","FTX puede proporcionar apoyo muscular ante molestias ocasionales","Puede impactar de forma positiva a nuestro cuerpo y su funcionamiento gracias a su poder antioxidante"],"modo_de_uso":"Tomar una tableta al día.","habito_elym":"Perfecto para antes de una rutina intensa. No exceder la dosis recomendada.","advertencias":["No apto para personas con insuficiencia renal","No recomendado para niños"],"sabor":null,"presentaciones":[{"contenido":"30 tabletas","precio":589.0,"moneda":"MXN","codigo":"PT748","pvn":205}],"imagenes":["https://sacmkbioimyzhiyleqdj.supabase.co/storage/v1/object/sign/Imagenes/hf_20260402_170932_cbb6cc74-5bcd-4758-9a0d-493551b434b4.png?token=eyJraWQiOiJzdG9yYWdlLXVybC1zaWduaW5nLWtleV9jYWFhYzBmMi1jODQ0LTRkNzMtYjYzYy00Zjg3ZmUyODI4MDIiLCJhbGciOiJIUzI1NiJ9.eyJ1cmwiOiJJbWFnZW5lcy9oZl8yMDI2MDQwMl8xNzA5MzJfY2JiNmNjNzQtNWJjZC00NzU4LTlhMGQtNDkzNTUxYjQzNGI0LnBuZyIsImlhdCI6MTc3NTE0OTg5NiwiZXhwIjoxODA2Njg1ODk2fQ.1ve5SPRkl6AGZVN8U9vO0E_rJ4art9b062rajiwFN2E"]},{"id":"bienestar-my-belly-t-polvo-350g","marca":"ISMERELY","activo":true,"producto":"My Belly-t","linea":"Bienestar Line","categoria":"Suplemento alimenticio","formato":"polvo","uso":"oral","descripcion":"Suplemento alimenticio en polvo a base de colágeno hidrolizado y ácido hialurónico.","ingredientes":["Extracto de naranja / uva","Colágeno hidrolizado","Omega 3,6,9","Calcio","Magnesio","Potasio","Vitamina A","Vitamina C","Vitamina E","Ácido hialurónico","Hierro","Zinc","Biotina"],"beneficios":["Colágeno hidrolizado","Tecnología alcaliniceutica","Semilla de uva","Ácido hialurónico","El colágeno hidrolizado puede prevenir la pérdida ósea y mejorar la apariencia de la piel","El Omega 3, 6 y 9 refuerza el sistema inmune, además de optimizar la circulación","Puede ayudar al cuidado de piel, uñas y cabello"],"modo_de_uso":"Disolver 8 g en 250 ml de agua, tomar por la mañana. No exceder la porción recomendada.","habito_elym":"Activa el brillo de tu piel cada mañana con una naranjada refrescante y natural con My Belly-t.","sabores":["Naranja","Uva"],"presentaciones":[{"contenido":"350 g","sabor":"Naranja","precio":589.0,"moneda":"MXN","codigo":"PT783","pvn":228},{"contenido":"350 g","sabor":"Uva","precio":589.0,"moneda":"MXN","codigo":"PT754","pvn":228}],"imagenes":["https://sacmkbioimyzhiyleqdj.supabase.co/storage/v1/object/sign/Imagenes/hf_20260402_171320_8c2a4acd-bcf4-4306-93b5-582f30c561a6.png?token=eyJraWQiOiJzdG9yYWdlLXVybC1zaWduaW5nLWtleV9jYWFhYzBmMi1jODQ0LTRkNzMtYjYzYy00Zjg3ZmUyODI4MDIiLCJhbGciOiJIUzI1NiJ9.eyJ1cmwiOiJJbWFnZW5lcy9oZl8yMDI2MDQwMl8xNzEzMjBfOGMyYTRhY2QtYmNmNC00MzA2LTkzYjUtNTgyZjMwYzU2MWE2LnBuZyIsImlhdCI6MTc3NTE1MDEyNSwiZXhwIjoxODA2Njg2MTI1fQ.q11wuwLo_jEcNjtqTdOIq1gkcAb_rbwNLoF5jm7lNZQ"]},{"id":"bienestar-my-belly-caps-60-capsulas","marca":"ISMERELY","activo":true,"producto":"My Belly Caps","linea":"Bienestar Line","categoria":"Suplemento alimenticio","formato":"capsulas","uso":"oral","descripcion":"Suplemento alimenticio en cápsula a base de colágeno hidrolizado, vitamina D y biotina.","ingredientes":["Colágeno hidrolizado","Semilla de uva","Jalea real","Vitamina C","Calcio","Magnesio","Potasio","Biotina","Vitamina K","Selenio","Vitamina D"],"beneficios":["Calcio","Biotina","Colágeno hidrolizado","Revitalización","Alto en antioxidantes, el colágeno y la biotina trabajan juntos y pueden colaborar a fortalecer tu piel, cabello y uñas","Ayudándote a lucir más saludable, joven y con más confianza"],"modo_de_uso":"Tomar una cápsula en la mañana y otra por la noche.","habito_elym":"La vitamina D ayuda a absorber el calcio fundamental para la salud del sistema óseo. (Artículo Científico).","sabor":null,"presentaciones":[{"contenido":"60 cápsulas","precio":429.0,"moneda":"MXN","codigo":"PT753","pvn":166}],"imagenes":["https://sacmkbioimyzhiyleqdj.supabase.co/storage/v1/object/sign/Imagenes/hf_20260402_171419_e312cbe2-b6bf-4a27-8415-f0139fc38291.png?token=eyJraWQiOiJzdG9yYWdlLXVybC1zaWduaW5nLWtleV9jYWFhYzBmMi1jODQ0LTRkNzMtYjYzYy00Zjg3ZmUyODI4MDIiLCJhbGciOiJIUzI1NiJ9.eyJ1cmwiOiJJbWFnZW5lcy9oZl8yMDI2MDQwMl8xNzE0MTlfZTMxMmNiZTItYjZiZi00YTI3LTg0MTUtZjAxMzlmYzM4MjkxLnBuZyIsImlhdCI6MTc3NTE1MDI3MCwiZXhwIjoxODA2Njg2MjcwfQ.0WNF3lhCagNAy2IgpiX8FL217FcZyYCLZLUeUoz7PK4"]},{"id":"bienestar-revenue-juice-liquido-1l","marca":"ISMERELY","activo":true,"producto":"Revenue Juice","linea":"Bienestar Line","categoria":"Suplemento alimenticio","formato":"liquido","uso":"oral","descripcion":"Suplemento alimenticio líquido a base de goji, mangostán y guaraná.","ingredientes":["Goji","Mangostán","Guaraná","Noni","Té verde","Arándano","Tamarindo","Guayaba","Mango","Semilla de uva","Vitamina B1","Vitamina B6","Vitamina B2","Vitamina A","Ácido Fólico","Vitamina B12","Vitamina C"],"beneficios":["Noni","Minerales","Mangostán","Sin azúcar","Alto contenido en vitaminas y minerales","Puede complementar tu alimentación, fortaleciendo tu energía, inmunidad y bienestar general","Para sentirte mejor todos los días, para grandes y pequeños"],"modo_de_uso":"Disolver 20 ml en 250 ml de agua antes del desayuno.","habito_elym":"Tómarlo directo por la mañana puede reducir la sensación de estrés durante el día. Dejar 5 seg. debajo de la lengua.","sabor":null,"presentaciones":[{"contenido":"1 L","precio":899.0,"moneda":"MXN","codigo":"PT733","pvn":349}],"imagenes":["https://sacmkbioimyzhiyleqdj.supabase.co/storage/v1/object/sign/Imagenes/hf_20260402_172052_729dbd26-0214-4ebc-bb7b-9257bc8c3ae4.png?token=eyJraWQiOiJzdG9yYWdlLXVybC1zaWduaW5nLWtleV9jYWFhYzBmMi1jODQ0LTRkNzMtYjYzYy00Zjg3ZmUyODI4MDIiLCJhbGciOiJIUzI1NiJ9.eyJ1cmwiOiJJbWFnZW5lcy9oZl8yMDI2MDQwMl8xNzIwNTJfNzI5ZGJkMjYtMDIxNC00ZWJjLWJiN2ItOTI1N2JjOGMzYWU0LnBuZyIsImlhdCI6MTc3NTE1MDUzMiwiZXhwIjoxODA2Njg2NTMyfQ.Lk6aUl350ptox6SwowD1U1dv5qGRallFIVqmAokBm4U"]},{"id":"bienestar-my-revenue-shake-polvo-500g","marca":"ISMERELY","activo":true,"producto":"My Revenue Shake","linea":"Bienestar Line","categoria":"Suplemento alimenticio","formato":"polvo","uso":"oral","descripcion":"Suplemento alimenticio en polvo a base de proteína aislada de chícharo, avena y cocoa.","ingredientes":["Proteína aislada de chícharo","Leche de coco","Avena","Cocoa","Colágeno hidrolizado","Noni","Vitamina B1","Vitamina B6","Vitamina B2","Vitamina A","Ácido fólico","Vitamina B12","Vitamina C"],"beneficios":["Proteína","Sin lactosa","7 vitaminas","36 kcal por porción","Su alto contenido en vitaminas y minerales contribuyen a la nutrición de grandes y pequeños","La proteína vegetal puede favorecer el sistema muscular","Alto en proteína"],"modo_de_uso":"Disolver 8 g en 250 ml de agua con hielos, tomarlo por la mañana.","habito_elym":"Contiene vitaminas, minerales y proteínas que ayudan a mantener la masa muscular.","sabor":"Chocolate","presentaciones":[{"contenido":"500 g","sabor":"Chocolate","precio":899.0,"moneda":"MXN","codigo":"PT734","pvn":349}],"imagenes":["https://sacmkbioimyzhiyleqdj.supabase.co/storage/v1/object/sign/Imagenes/hf_20260402_172302_c3ea601e-e0b3-4c3a-a2c7-ec2a9090e092.png?token=eyJraWQiOiJzdG9yYWdlLXVybC1zaWduaW5nLWtleV9jYWFhYzBmMi1jODQ0LTRkNzMtYjYzYy00Zjg3ZmUyODI4MDIiLCJhbGciOiJIUzI1NiJ9.eyJ1cmwiOiJJbWFnZW5lcy9oZl8yMDI2MDQwMl8xNzIzMDJfYzNlYTYwMWUtZTBiMy00YzNhLWEyYzctZWMyYTkwOTBlMDkyLnBuZyIsImlhdCI6MTc3NTE1MDYzOCwiZXhwIjoxODA2Njg2NjM4fQ.fvpRehZrtZTty8K7ezdFzIzk3eYgzujVmL-noqaqVKI"]},{"id":"bienestar-my-revenue-caps-60-capsulas","marca":"ISMERELY","activo":true,"producto":"My Revenue Caps","linea":"Bienestar Line","categoria":"Suplemento alimenticio","formato":"capsulas","uso":"oral","descripcion":"Suplemento alimenticio en cápsula a base de granada, acaí y noni.","ingredientes":["Vitamina B1","Vitamina B6","Vitamina B2","Vitamina A","Ácido fólico","Vitamina B12","Vitamina C","Granada","Acaí","Noni","Guanábana","Guaraná","Mangostán","Goji"],"beneficios":["Acaí","7 vitaminas","Goji","Antioxidante","La vitamina C es un poderoso antioxidante que favorece el sistema inmunológico","Brinda mantenimiento celular contra radicales libres"],"modo_de_uso":"Tomar una cápsula al día.","habito_elym":"Recupera tu vitalidad celular tomando una cápsula al día y dale un giro a tu bienestar.","sabor":null,"presentaciones":[{"contenido":"60 cápsulas","precio":599.0,"moneda":"MXN","codigo":"PT735","pvn":232}],"imagenes":["https://sacmkbioimyzhiyleqdj.supabase.co/storage/v1/object/sign/Imagenes/hf_20260402_172444_e6a46b2e-ff41-494e-8d82-646ae7ba2634.png?token=eyJraWQiOiJzdG9yYWdlLXVybC1zaWduaW5nLWtleV9jYWFhYzBmMi1jODQ0LTRkNzMtYjYzYy00Zjg3ZmUyODI4MDIiLCJhbGciOiJIUzI1NiJ9.eyJ1cmwiOiJJbWFnZW5lcy9oZl8yMDI2MDQwMl8xNzI0NDRfZTZhNDZiMmUtZmY0MS00OTRlLThkODItNjQ2YWU3YmEyNjM0LnBuZyIsImlhdCI6MTc3NTE1MDc0NSwiZXhwIjoxODA2Njg2NzQ1fQ.C5UgHgajqlqbMw0s1tHeO9quyRM6upPkHoHq5in-g94"]},{"id":"bienestar-reven-vit-capsulas-30","marca":"ISMERELY","activo":true,"producto":"Reven-Vit","linea":"Bienestar Line","categoria":"Suplemento alimenticio","formato":"capsulas","uso":"oral","descripcion":"Suplemento alimenticio en cápsula a base de Vitamina B.","ingredientes":["Vitamina C (ácido ascórbico)","Vitamina B1 (tiamina)","Vitamina B2 (riboflavina)","Vitamina B3 (niacina)","Vitamina B5 (ácido pantoténico)","Vitamina B6 (piridoxina)","Vitamina B7 (biotina)","Vitamina B9 (ácido fólico)","Vitamina B12 (cianocobalamina)"],"beneficios":["Vitaminas B","Vitamina C","1 cápsula diaria","Eleva tu energía","Las vitaminas del Complejo B participan en los procesos cognitivos y mantenimiento del sistema nervioso"],"modo_de_uso":"Tomar una cápsula por la mañana.","habito_elym":"Disfruta de una descarga de energía tomando una cápsula al día por la mañana. Ideal para complementar tu rutina fit.","sabor":null,"presentaciones":[{"contenido":"30 cápsulas","precio":599.0,"moneda":"MXN","codigo":"PT795","pvn":232}],"imagenes":["https://sacmkbioimyzhiyleqdj.supabase.co/storage/v1/object/sign/Imagenes/hf_20260402_172659_78b58901-ede4-4a2b-aba5-30ddf383e342.png?token=eyJraWQiOiJzdG9yYWdlLXVybC1zaWduaW5nLWtleV9jYWFhYzBmMi1jODQ0LTRkNzMtYjYzYy00Zjg3ZmUyODI4MDIiLCJhbGciOiJIUzI1NiJ9.eyJ1cmwiOiJJbWFnZW5lcy9oZl8yMDI2MDQwMl8xNzI2NTlfNzhiNTg5MDEtZWRlNC00YTJiLWFiYTUtMzBkZGYzODNlMzQyLnBuZyIsImlhdCI6MTc3NTE1MDg5MCwiZXhwIjoxODA2Njg2ODkwfQ.4ochase3sTSNIpyDUGIXI8j-w6iM0temRL1sD777Sv0"]},{"id":"bienestar-mybio-nco-polvo-250g","marca":"ISMERELY","activo":true,"producto":"MyBio-Nco","linea":"Bienestar Line","categoria":"Suplemento alimenticio","formato":"polvo","uso":"oral","descripcion":"Suplemento alimenticio en polvo para preparar bebida a base de Noni, Guanábana y Moringa.","ingredientes":["Maltodextrina","Estevia","Moringa","Uña de gato","Cancerina","Cardo bendito","Semilla de uva","Guanábana","Noni","Yaca","Tamarillo","Menta en polvo"],"beneficios":["Noni","Sin azúcar","Antioxidantes","30 kcal por porción","Gracias a sus ingredientes naturales puede optimizar las defensas","Su fórmula puede favorecer el sistema inmunológico","Puede colaborar con el sistema óseo, nervioso y hormonal"],"modo_de_uso":"Disolver 5 g en 250 ml de agua fría o caliente, tomarlo por la mañana o por la noche.","habito_elym":"Devuelve a tu cuerpo la protección que tanto necesita, haz una fórmula poderosa con MyBio-Nco, MyLive Té y DTX-Oxigen y refuerza tu día.","sabor":"Menta","presentaciones":[{"contenido":"250 g","precio":589.0,"moneda":"MXN","codigo":"PT742","pvn":228}],"imagenes":["https://sacmkbioimyzhiyleqdj.supabase.co/storage/v1/object/sign/Imagenes/hf_20260402_172905_aa3e4a62-b65c-4f24-9e93-657fd52447cd.png?token=eyJraWQiOiJzdG9yYWdlLXVybC1zaWduaW5nLWtleV9jYWFhYzBmMi1jODQ0LTRkNzMtYjYzYy00Zjg3ZmUyODI4MDIiLCJhbGciOiJIUzI1NiJ9.eyJ1cmwiOiJJbWFnZW5lcy9oZl8yMDI2MDQwMl8xNzI5MDVfYWEzZTRhNjItYjY1Yy00ZjI0LTllOTMtNjU3ZmQ1MjQ0N2NkLnBuZyIsImlhdCI6MTc3NTE1MTAyOSwiZXhwIjoxODA2Njg3MDI5fQ.w24UuMAEs-NXy74wR5nHCKfb4HjbAJxGbPbaPWPPNG8"]},{"id":"bienestar-mylive-t-polvo-250g","marca":"ISMERELY","activo":true,"producto":"MyLive-t","linea":"Bienestar Line","categoria":"Suplemento alimenticio","formato":"polvo","uso":"oral","descripcion":"Suplemento alimenticio en polvo a base de mangostán, noni y guaraná.","ingredientes":["Té negro","Té verde","Espino amarillo","Stevia","Cascarilla de cacao","Rhodiola","Noni","Yerba mate","Maca","Zarzaparrilla","Vitamina C","Vitamina E","Vitamina B3","Vitamina B5","Vitamina B6","Vitamina B1","Vitamina A","Vitamina D"],"beneficios":["17 kcal por porción","Stevia","Aminoácidos","Energía","Su fórmula y vitaminas del complejo B pueden contribuir en los procesos relacionados con la obtención de energía y rendimiento físico"],"modo_de_uso":"Disolver 5 g en 250 ml de agua fría o caliente, tomarlo por la mañana.","habito_elym":"Tómalo en cualquier momento de tu día para darte un extra de energía y vitalidad.","sabores":["Té verde","Maracuyá"],"presentaciones":[{"contenido":"250 g","sabor":"Té verde","precio":599.0,"moneda":"MXN","codigo":"PT776","pvn":232},{"contenido":"250 g","sabor":"Maracuyá","precio":599.0,"moneda":"MXN","codigo":"PT793","pvn":232}],"imagenes":["https://sacmkbioimyzhiyleqdj.supabase.co/storage/v1/object/sign/Imagenes/hf_20260402_173042_5be83978-224b-4834-b4ff-056f1806e3c3.png?token=eyJraWQiOiJzdG9yYWdlLXVybC1zaWduaW5nLWtleV9jYWFhYzBmMi1jODQ0LTRkNzMtYjYzYy00Zjg3ZmUyODI4MDIiLCJhbGciOiJIUzI1NiJ9.eyJ1cmwiOiJJbWFnZW5lcy9oZl8yMDI2MDQwMl8xNzMwNDJfNWJlODM5NzgtMjI0Yi00ODM0LWI0ZmYtMDU2ZjE4MDZlM2MzLnBuZyIsImlhdCI6MTc3NTE1MTEwOSwiZXhwIjoxODA2Njg3MTA5fQ.BFSdZS9tomtir6vfalJmgNuUdQQ-Pz29x9lJEysDxos"]},{"id":"bienestar-stefya-edulcorante-25ml","marca":"ISMERELY","activo":true,"producto":"Stefya","linea":"Bienestar Line","categoria":"Edulcorante natural","formato":"liquido","uso":"oral","descripcion":"Edulcorante natural a base de estevia. Cero calorías.","ingredientes":["Estevia"],"beneficios":["Stevia","Endulzante natural","Cero calorías","No aporta calorías, lo que la hace ideal para reducir su ingesta calórica"],"modo_de_uso":"Agregar una gota por cada 250 ml.","habito_elym":"Endulza tus shakes y snacks saludables con Stefya, siendo el aliado perfecto sin calorías.","sabor":null,"presentaciones":[{"contenido":"25 ml","precio":389.0,"moneda":"MXN","codigo":"PT762","pvn":151}],"imagenes":["https://sacmkbioimyzhiyleqdj.supabase.co/storage/v1/object/sign/Imagenes/hf_20260402_173134_27908e53-f998-4cb4-8441-b8fbed2d06d1.png?token=eyJraWQiOiJzdG9yYWdlLXVybC1zaWduaW5nLWtleV9jYWFhYzBmMi1jODQ0LTRkNzMtYjYzYy00Zjg3ZmUyODI4MDIiLCJhbGciOiJIUzI1NiJ9.eyJ1cmwiOiJJbWFnZW5lcy9oZl8yMDI2MDQwMl8xNzMxMzRfMjc5MDhlNTMtZjk5OC00Y2I0LTg0NDEtYjhmYmVkMmQwNmQxLnBuZyIsImlhdCI6MTc3NTE1MTE4MSwiZXhwIjoxODA2Njg3MTgxfQ.-T3V7gwL5QmxAvLxF3Z5j-kacyLfiS8lUODm6E_axcc"]},{"id":"bienestar-omg369-capsulas-60","marca":"ISMERELY","activo":true,"producto":"OMG369","linea":"Bienestar Line","categoria":"Suplemento alimenticio","formato":"capsulas","uso":"oral","descripcion":"Suplemento alimenticio en cápsula a base de mezcla de aceite de pescado.","ingredientes":["Mezcla de aceites de pescado","Ácido Eicosapentaenoico (EPA)","Ácido Docosahexaenoico (DHA)"],"beneficios":["DHA y EPA","Salmón Noruego","Omega 3, 6 y 9","Energía","Puede contribuir en el desdoblamiento de las grasas de los alimentos, para favorecer una mayor absorción y convertirla en energía"],"modo_de_uso":"Tomar una cápsula al día después del desayuno.","habito_elym":"Formulado como un complemento ideal para tu alimentación diaria y el cuidado de tu corazón.","sabor":null,"presentaciones":[{"contenido":"60 cápsulas","precio":599.0,"moneda":"MXN","codigo":"PT736","pvn":232}],"imagenes":["https://sacmkbioimyzhiyleqdj.supabase.co/storage/v1/object/sign/Imagenes/hf_20260402_173358_72a012ae-0834-4765-a094-eb466dcf3581.png?token=eyJraWQiOiJzdG9yYWdlLXVybC1zaWduaW5nLWtleV9jYWFhYzBmMi1jODQ0LTRkNzMtYjYzYy00Zjg3ZmUyODI4MDIiLCJhbGciOiJIUzI1NiJ9.eyJ1cmwiOiJJbWFnZW5lcy9oZl8yMDI2MDQwMl8xNzMzNThfNzJhMDEyYWUtMDgzNC00NzY1LWEwOTQtZWI0NjZkY2YzNTgxLnBuZyIsImlhdCI6MTc3NTE1MTI5MSwiZXhwIjoxODA2Njg3MjkxfQ.heI5_6K2HzKHXeGpNQYsDxPuPnw1DdvQGhA430R22Cc"]},{"id":"bienestar-suker-juice-liquido-500ml","marca":"ISMERELY","activo":true,"producto":"Suker Juice","linea":"Bienestar Line","categoria":"Suplemento alimenticio","formato":"liquido","uso":"oral","descripcion":"Suplemento alimenticio líquido a base de Yaca, guaraná y xoconostle.","ingredientes":["Guayacán amarillo","Guaraná","Goma Xantana","Perejil","Yaca","Guanábana","Xoconostle","Neem","Palo de arco","Matarique"],"beneficios":["Perejil","Optimiza","Antioxidante","Regulador","Elaborado a base de extractos vegetales que pueden ayudar a tratamientos de regeneración","Diseñado para complementar tu dieta diaria y devolver el buen funcionamiento de tu sistema inmunológico"],"modo_de_uso":"Diluir 15 ml en 250 ml de agua después del desayuno.","habito_elym":"La yaca contiene fitoquímicos que intervienen significativamente en el sistema inmunitario.","sabor":null,"presentaciones":[{"contenido":"500 ml","precio":589.0,"moneda":"MXN","codigo":"PT744","pvn":228}],"imagenes":["https://sacmkbioimyzhiyleqdj.supabase.co/storage/v1/object/sign/Imagenes/hf_20260402_173617_51403aa5-4ae5-44e9-8e9f-c844fd1d8a29.png?token=eyJraWQiOiJzdG9yYWdlLXVybC1zaWduaW5nLWtleV9jYWFhYzBmMi1jODQ0LTRkNzMtYjYzYy00Zjg3ZmUyODI4MDIiLCJhbGciOiJIUzI1NiJ9.eyJ1cmwiOiJJbWFnZW5lcy9oZl8yMDI2MDQwMl8xNzM2MTdfNTE0MDNhYTUtNGFlNS00NGU5LThlOWYtYzg0NGZkMWQ4YTI5LnBuZyIsImlhdCI6MTc3NTE1MTQzMSwiZXhwIjoxODA2Njg3NDMxfQ.ezalPKJUnghNghJ8gVEZnqgWhLy4jWelZnufCYPcR4Y"]},{"id":"bienestar-my-suker-caps-60-capsulas","marca":"ISMERELY","activo":true,"producto":"My Suker Caps","linea":"Bienestar Line","categoria":"Suplemento alimenticio","formato":"capsulas","uso":"oral","descripcion":"Suplemento alimenticio en cápsula a base de neem, palo de arco y xoconostle.","ingredientes":["Guayacán amarillo","Guaraná","Estearato de magnesio","Perejil","Xoconostle","Neem","Palo de arco","Matarique"],"beneficios":["Guaraná","Regenera","Reduce la glucosa","Circulación","Su extracto de plantas diseñado para apoyar y cuidar tu sistema hepático","Pueden ayudarte a desintoxicar, regenerar y nutrir el hígado de manera efectiva"],"modo_de_uso":"Tomar una cápsula después del desayuno.","habito_elym":"El guaraná contiene antioxidantes que coadyuvan a mejorar el flujo sanguíneo y reducir la formación de coágulos.","sabor":null,"presentaciones":[{"contenido":"60 cápsulas","precio":429.0,"moneda":"MXN","codigo":"PT743","pvn":166}],"imagenes":["https://sacmkbioimyzhiyleqdj.supabase.co/storage/v1/object/sign/Imagenes/hf_20260402_173749_d4ea73be-788a-435d-8a39-1a5402965d51.png?token=eyJraWQiOiJzdG9yYWdlLXVybC1zaWduaW5nLWtleV9jYWFhYzBmMi1jODQ0LTRkNzMtYjYzYy00Zjg3ZmUyODI4MDIiLCJhbGciOiJIUzI1NiJ9.eyJ1cmwiOiJJbWFnZW5lcy9oZl8yMDI2MDQwMl8xNzM3NDlfZDRlYTczYmUtNzg4YS00MzVkLThhMzktMWE1NDAyOTY1ZDUxLnBuZyIsImlhdCI6MTc3NTE1MTU0MSwiZXhwIjoxODA2Njg3NTQxfQ.DS4DQX8RfoVVdjt3PHFMhpuGyJA2TLY9T3wt65Uh1yg"]},{"id":"bienestar-savera-polvo-350g","marca":"ISMERELY","activo":true,"producto":"Savera","linea":"Bienestar Line","categoria":"Suplemento alimenticio","formato":"polvo","uso":"oral","descripcion":"Suplemento alimenticio en polvo a base de acaí, goji y piña.","ingredientes":["Goji","Arándano","Acaí","Piña","Hierba del pollo","Muicle","Inulina de agave","Fósforo","Calcio","Magnesio","Vitamina B2","Hierro","Vitamina B1","Vitamina B3","Zinc","Manganeso","Vitamina A"],"beneficios":["Piña","Magnesio","Fibra","Sin azúcar","Sus nutrientes pueden ayudar a promover la proliferación de bacterias benéficas para el tracto gastrointestinal","El acaí es rico en fibra, que optimiza movimientos intestinales regulares, ayuda a prevenir el estreñimiento y puede mejorar la salud de la microbiota intestinal"],"modo_de_uso":"Disolver 8 g en 250 ml de agua, tomarlo por la mañana antes del desayuno.","habito_elym":"El acaí es rico en fibra, que optimiza movimientos intestinales regulares, ayuda a prevenir el estreñimiento y puede mejorar la salud de la microbiota intestinal.","sabor":"Piña","presentaciones":[{"contenido":"350 g","precio":589.0,"moneda":"MXN","codigo":"PT781","pvn":228}],"imagenes":["https://sacmkbioimyzhiyleqdj.supabase.co/storage/v1/object/sign/Imagenes/hf_20260402_174012_3657ad9a-4bfe-430e-ae38-b0ff049f3826.png?token=eyJraWQiOiJzdG9yYWdlLXVybC1zaWduaW5nLWtleV9jYWFhYzBmMi1jODQ0LTRkNzMtYjYzYy00Zjg3ZmUyODI4MDIiLCJhbGciOiJIUzI1NiJ9.eyJ1cmwiOiJJbWFnZW5lcy9oZl8yMDI2MDQwMl8xNzQwMTJfMzY1N2FkOWEtNGJmZS00MzBlLWFlMzgtYjBmZjA0OWYzODI2LnBuZyIsImlhdCI6MTc3NTE1MTgzMCwiZXhwIjoxODA2Njg3ODMwfQ.Egcxc8-HUsjqfrZIvTn8nclB5vxD12Q4ehAuxIcM58Y"]},{"id":"bienestar-savera-juice-liquido-1l","marca":"ISMERELY","activo":true,"producto":"Savera Juice","linea":"Bienestar Line","categoria":"Suplemento alimenticio","formato":"liquido","uso":"oral","descripcion":"Suplemento alimenticio líquido a base de acaí, goji y arándano.","ingredientes":["Calcio","Fósforo","Magnesio","Probióticos","Vitamina B2 (riboflavina)","Hierro","Vitamina B1 (tiamina)","Vitamina B3 (niacina)","Zinc","Manganeso","Vitamina A (retinol)","Saborizante de frutos tropicales","Sucralosa","Benzoato de sodio","Goji (lycium barbarum)","Arándano (vaccinium corymbosum)","Acaí (euterpe oleracea)"],"beneficios":["Antioxidante","Optimiza","Regulador","Excelente antioxidante que puede favorecer a tu flora intestinal","Puede colaborar a un buen funcionamiento del sistema digestivo"],"modo_de_uso":"Diluir 20 ml en 250 ml, tómalo después de cada comida.","habito_elym":"Mézclalo con FTElym Oxigen y disfruta de una bebida que puede equilibrar tu PH intestinal.","sabor":null,"presentaciones":[{"contenido":"1 L","precio":589.0,"moneda":"MXN","codigo":"PT745","pvn":228}],"imagenes":["https://sacmkbioimyzhiyleqdj.supabase.co/storage/v1/object/sign/Imagenes/hf_20260402_174449_bc2a3de5-f214-4267-b0db-88abd296b4df.png?token=eyJraWQiOiJzdG9yYWdlLXVybC1zaWduaW5nLWtleV9jYWFhYzBmMi1jODQ0LTRkNzMtYjYzYy00Zjg3ZmUyODI4MDIiLCJhbGciOiJIUzI1NiJ9.eyJ1cmwiOiJJbWFnZW5lcy9oZl8yMDI2MDQwMl8xNzQ0NDlfYmMyYTNkZTUtZjIxNC00MjY3LWIwZGItODhhYmQyOTZiNGRmLnBuZyIsImlhdCI6MTc3NTE1MTk3MCwiZXhwIjoxODA2Njg3OTcwfQ.L65rh3JJfcP8qn7JcOMvrfVZO7-zNm9RRAojgTWNdcs"]},{"id":"bienestar-my-gs-trel-caps-60-capsulas","marca":"ISMERELY","activo":true,"producto":"My GS-Trel Caps","linea":"Bienestar Line","categoria":"Suplemento alimenticio","formato":"capsulas","uso":"oral","descripcion":"Suplemento alimenticio en cápsula a base de tlanchichinole, té verde y nopal.","ingredientes":["Menta Blanca","Tlanchichinole","Té Verde","Nopal","Cancerina","Tepezcohuite","Vitamina B3","Estearato de magnesio"],"beneficios":["Nopal","Té Verde","Vitamina B3","Equilibrio","Las cápsulas de My GS-TREL contienen una valiosa concentración de ingredientes naturales y vitaminas que brindan un excelente apoyo para tu organismo","Puede brindar un excelente apoyo para tu sistema digestivo"],"modo_de_uso":"Tomar una cápsula al día antes del desayuno.","habito_elym":"Optimiza tu plan de bienestar digestivo con una cápsula de My GS-Trel Caps por la mañana.","sabor":null,"presentaciones":[{"contenido":"60 cápsulas","precio":429.0,"moneda":"MXN","codigo":"PT775","pvn":166}],"imagenes":["https://sacmkbioimyzhiyleqdj.supabase.co/storage/v1/object/sign/Imagenes/hf_20260402_174712_42499ee1-04aa-4d9f-b19b-3d1434dbedc0.png?token=eyJraWQiOiJzdG9yYWdlLXVybC1zaWduaW5nLWtleV9jYWFhYzBmMi1jODQ0LTRkNzMtYjYzYy00Zjg3ZmUyODI4MDIiLCJhbGciOiJIUzI1NiJ9.eyJ1cmwiOiJJbWFnZW5lcy9oZl8yMDI2MDQwMl8xNzQ3MTJfNDI0OTllZTEtMDRhYS00ZDlmLWIxOWItM2QxNDM0ZGJlZGMwLnBuZyIsImlhdCI6MTc3NTE1MjA5NSwiZXhwIjoxODA2Njg4MDk1fQ.VqdTsGLNcekS9wLf1G1KnQnaBQtkd1rTldPLqxq_0J8"]},{"id":"bienestar-begreen-liquido","marca":"ISMERELY","activo":true,"producto":"BeGreen","linea":"Bienestar Line","categoria":"Suplemento alimenticio","formato":"liquido","uso":"oral","descripcion":"Suplemento alimenticio líquido a base de alga espirulina, clorofila y hierbabuena.","ingredientes":["Alga espirulina","Té verde","Alfalfa","Hierbabuena","Menta","Clorofila","Estevia","Vitamina C"],"beneficios":["Clorofila","Menta","Detox","Frescura","Contribuye a complementar la ingesta diaria de nutrientes esenciales","Puede disminuir toxinas y favorecer el buen funcionamiento del organismo","Puede contribuir a mejorar el aliento","La clorofila ayuda a eliminar toxinas, metales pesados y productos químicos nocivos del cuerpo"],"modo_de_uso":"Diluir 15 ml en 250 ml de agua y tomar antes del desayuno.","habito_elym":"La clorofila ayuda a eliminar toxinas, metales pesados y productos químicos nocivos del cuerpo.","sabor":null,"presentaciones":[{"contenido":"500 ml","precio":429.0,"moneda":"MXN","codigo":"PT747","pvn":166},{"contenido":"1 L","precio":599.0,"moneda":"MXN","codigo":"PT746","pvn":232}],"imagenes":["https://sacmkbioimyzhiyleqdj.supabase.co/storage/v1/object/sign/Imagenes/hf_20260402_174853_09a38b06-e44f-40a3-9f8c-942e6a815688.png?token=eyJraWQiOiJzdG9yYWdlLXVybC1zaWduaW5nLWtleV9jYWFhYzBmMi1jODQ0LTRkNzMtYjYzYy00Zjg3ZmUyODI4MDIiLCJhbGciOiJIUzI1NiJ9.eyJ1cmwiOiJJbWFnZW5lcy9oZl8yMDI2MDQwMl8xNzQ4NTNfMDlhMzhiMDYtZTQ0Zi00MGEzLTlmOGMtOTQyZTZhODE1Njg4LnBuZyIsImlhdCI6MTc3NTE1MjE4NiwiZXhwIjoxODA2Njg4MTg2fQ.YFF7qE03wbJC4KnFYAPQOzKf0IiqM08AZPnrylddcdU"]},{"id":"bienestar-xugo-vrd-polvo-250g","marca":"ISMERELY","activo":true,"producto":"Xugo VRD","linea":"Bienestar Line","categoria":"Suplemento alimenticio","formato":"polvo","uso":"oral","descripcion":"Suplemento alimenticio en polvo a base de nopal, alfalfa y piña.","ingredientes":["Brócoli","Nopal","Alfalfa","Piña","Zanahoria","Vitamina B4","Vitamina C","Salvado de trigo","Ciruela","Manzana verde","Chía","Semillas de limón"],"beneficios":["Kale","Manzana Verde","Ligero","Digestivo","Su mezcla exclusiva de fibra puede favorecer positivamente a las funciones digestivas","Puede favorecer a la desinflamación y sentirte más ligero"],"modo_de_uso":"Disolver 10 g en 250 ml de agua fría o caliente, tomarlo por la mañana y por la noche.","habito_elym":"Inicia tu día con energía combinándolo con tu fruta preferida. Activa sus superpoderes combinándolo con una fruta y tu producto favorito.","sabor":null,"presentaciones":[{"contenido":"250 g","precio":529.0,"moneda":"MXN","codigo":"PT790","pvn":205}],"imagenes":["https://sacmkbioimyzhiyleqdj.supabase.co/storage/v1/object/sign/Imagenes/hf_20260402_175024_13ab2cf6-f869-430b-b95e-7b6c2c2dad1f.png?token=eyJraWQiOiJzdG9yYWdlLXVybC1zaWduaW5nLWtleV9jYWFhYzBmMi1jODQ0LTRkNzMtYjYzYy00Zjg3ZmUyODI4MDIiLCJhbGciOiJIUzI1NiJ9.eyJ1cmwiOiJJbWFnZW5lcy9oZl8yMDI2MDQwMl8xNzUwMjRfMTNhYjJjZjYtZjg2OS00MzBiLWI5NWUtN2I2YzJjMmRhZDFmLnBuZyIsImlhdCI6MTc3NTE1MjMzMiwiZXhwIjoxODA2Njg4MzMyfQ.OJu9IhK_Hl8PXn1BkAwrUDHUSm3vH9NHDL5n02AH9dU"]},{"id":"bienestar-dgbran-polvo-450g","marca":"ISMERELY","activo":true,"producto":"DgBran","linea":"Bienestar Line","categoria":"Suplemento alimenticio","formato":"polvo","uso":"oral","descripcion":"Suplemento alimenticio en polvo a base de ciruela, piña, nopal y toronja.","ingredientes":["Fibra dietética","Semilla de sésamo","Toronja","Linaza","Ciruela","Piña","Nopal"],"beneficios":["Linaza","Nopal","Ligero","Antiinflamatorio","Su mezcla exclusiva de fibra puede favorecer positivamente en las funciones digestivas","El té verde es una gran fuente de antioxidantes"],"modo_de_uso":"Disolver 15 g en 250 ml de agua, tomarlo por la mañana y por la noche.","habito_elym":"Agrégalo a tu jugo preferido por las mañanas y disfruta de un complemento perfecto.","sabor":null,"presentaciones":[{"contenido":"450 g","precio":389.0,"moneda":"MXN","codigo":"PT764","pvn":151}],"imagenes":["https://sacmkbioimyzhiyleqdj.supabase.co/storage/v1/object/sign/Imagenes/hf_20260402_175304_abca941d-e152-4aec-b269-77a22137586b.png?token=eyJraWQiOiJzdG9yYWdlLXVybC1zaWduaW5nLWtleV9jYWFhYzBmMi1jODQ0LTRkNzMtYjYzYy00Zjg3ZmUyODI4MDIiLCJhbGciOiJIUzI1NiJ9.eyJ1cmwiOiJJbWFnZW5lcy9oZl8yMDI2MDQwMl8xNzUzMDRfYWJjYTk0MWQtZTE1Mi00YWVjLWIyNjktNzdhMjIxMzc1ODZiLnBuZyIsImlhdCI6MTc3NTE1MjYwMiwiZXhwIjoxODA2Njg4NjAyfQ.TnDfXqZPBnJELYV1Knsobzcww4AhS3N5RDAsUh_iJXg"]},{"id":"bienestar-my-st-mory-caps-60-capsulas","marca":"ISMERELY","activo":true,"producto":"My ST-Mory Caps","linea":"Bienestar Line","categoria":"Suplemento alimenticio","formato":"capsulas","uso":"oral","descripcion":"Suplemento alimenticio en cápsula a base de tila, albahaca y ashwagandha.","ingredientes":["Calcio","Vitamina B1 (tiamina)","Zinc","Vitamina B9 (ácido fólico)","Tila","Rhodiola","Albahaca","Ashwagandha"],"beneficios":["Albahaca","Tila","Cognición","Memoria","Sus ingredientes pueden contribuir con el mantenimiento de la función cognitiva","Aporta nutrientes que participan en los procesos relacionados con la memoria","La Ashwagandha puede tener propiedades adaptogénicas que pueden ayudar a reducir el estrés y la ansiedad"],"modo_de_uso":"Tomar una cápsula al día.","habito_elym":"La Ashwagandha puede tener propiedades adaptogénicas que pueden ayudar a reducir el estrés y la ansiedad, lo que puede mejorar la función cognitiva.","sabor":null,"presentaciones":[{"contenido":"60 cápsulas","precio":429.0,"moneda":"MXN","codigo":"PT760","pvn":166}],"imagenes":["https://sacmkbioimyzhiyleqdj.supabase.co/storage/v1/object/sign/Imagenes/hf_20260402_175733_433077f8-6eb2-459b-ba5b-181e6c48f123.png?token=eyJraWQiOiJzdG9yYWdlLXVybC1zaWduaW5nLWtleV9jYWFhYzBmMi1jODQ0LTRkNzMtYjYzYy00Zjg3ZmUyODI4MDIiLCJhbGciOiJIUzI1NiJ9.eyJ1cmwiOiJJbWFnZW5lcy9oZl8yMDI2MDQwMl8xNzU3MzNfNDMzMDc3ZjgtNmViMi00NTliLWJhNWItMTgxZTZjNDhmMTIzLnBuZyIsImlhdCI6MTc3NTE1MjcxNiwiZXhwIjoxODA2Njg4NzE2fQ.cLoyXKqfbjxGUw_0TNlIo0naEB6zioV1Ixvqz8LjAOY"]},{"id":"bienestar-mymahal-polvo-250g","marca":"ISMERELY","activo":true,"producto":"MyMahal","linea":"Bienestar Line","categoria":"Suplemento alimenticio","formato":"polvo","uso":"oral","descripcion":"Suplemento alimenticio en polvo a base de pasiflora, cedrón y azahar.","ingredientes":["Estevia","Rhodiola","Zacate de limón","Pasiflora","Azahar","Cedrón","Vitamina C","Ácido glutámico","Vitamina B3","Vitamina B6","Vitamina B2","Vitamina B5","Vitamina B1","Vitamina H (Biotina)"],"beneficios":["18 kcal por porción","Stevia","Azahar","Relajante","El complejo B es necesario para el funcionamiento del sistema nervioso y puede favorecer el estado de ánimo","La pasiflora contiene numerosos compuestos que contribuyen a una sensación de calma y relajación"],"modo_de_uso":"Disolver 5 g en 250 ml de agua fría o caliente, tomarlo por la mañana o por la noche.","habito_elym":"Mejora tu ánimo al disfrutarlo cada mañana caliente o frío.","sabor":"Zacate Limón","presentaciones":[{"contenido":"250 g","precio":489.0,"moneda":"MXN","codigo":"PT751","pvn":190}],"imagenes":["https://sacmkbioimyzhiyleqdj.supabase.co/storage/v1/object/sign/Imagenes/hf_20260402_175947_a42ab1f7-ad4d-4213-a075-7b53c1141308.png?token=eyJraWQiOiJzdG9yYWdlLXVybC1zaWduaW5nLWtleV9jYWFhYzBmMi1jODQ0LTRkNzMtYjYzYy00Zjg3ZmUyODI4MDIiLCJhbGciOiJIUzI1NiJ9.eyJ1cmwiOiJJbWFnZW5lcy9oZl8yMDI2MDQwMl8xNzU5NDdfYTQyYWIxZjctYWQ0ZC00MjEzLWEwNzUtN2I1M2MxMTQxMzA4LnBuZyIsImlhdCI6MTc3NTE1Mjg1NSwiZXhwIjoxODA2Njg4ODU1fQ.GiX2sa0oCmsvS7L5jbCb37uhzT-080Dy1QsU1oKd08o"]},{"id":"bienestar-mymahal-ex-liquido-500ml","marca":"ISMERELY","activo":true,"producto":"MyMahal-Ex","linea":"Bienestar Line","categoria":"Suplemento alimenticio","formato":"liquido","uso":"oral","descripcion":"Suplemento alimenticio líquido a base de pasiflora, cedrón y flor de manita.","ingredientes":["Vitamina C","Vitamina B3","Vitamina B5","Vitamina E","Vitamina B1","Vitamina B2","Vitamina B6","Vitamina A","Vitamina H","Vitamina B9","Vitamina K","Vitamina D3","Vitamina B12","Cedrón","Pasiflora","Flor de manita","Ácido glutámico","L-glutatión"],"beneficios":["Vitaminas","Equilibrio","Relajación","Tranquilidad","Las vitaminas del Complejo B pueden participar en los procesos cognitivos y mantenimiento del sistema nervioso"],"modo_de_uso":"Diluir 20 ml en 250 ml de agua, 2 veces al día.","habito_elym":"Tómalo directo por la mañana, puede reducir la sensación de estrés durante el día.","sabor":null,"presentaciones":[{"contenido":"500 ml","precio":529.0,"moneda":"MXN","codigo":"PT752","pvn":205}],"imagenes":["https://sacmkbioimyzhiyleqdj.supabase.co/storage/v1/object/sign/Imagenes/hf_20260402_180110_a5da4846-5b05-4e18-aac0-7c792f82b39a.png?token=eyJraWQiOiJzdG9yYWdlLXVybC1zaWduaW5nLWtleV9jYWFhYzBmMi1jODQ0LTRkNzMtYjYzYy00Zjg3ZmUyODI4MDIiLCJhbGciOiJIUzI1NiJ9.eyJ1cmwiOiJJbWFnZW5lcy9oZl8yMDI2MDQwMl8xODAxMTBfYTVkYTQ4NDYtNWIwNS00ZTE4LWFhYzAtN2M3OTJmODJiMzlhLnBuZyIsImlhdCI6MTc3NTE1MzA2OSwiZXhwIjoxODA2Njg5MDY5fQ.BAZhniS_IDfZixqNoSrULr7ehtF8tlq0Y9FG7oObE2M"]},{"id":"bienestar-my-mahal-caps-60-capsulas","marca":"ISMERELY","activo":true,"producto":"My Mahal Caps","linea":"Bienestar Line","categoria":"Suplemento alimenticio","formato":"capsulas","uso":"oral","descripcion":"Suplemento alimenticio en cápsula a base de ashwagandha, cedrón y pasiflora.","ingredientes":["Ashwagandha","Cedrón","Tila","Pasiflora","Lavanda","Albahaca","Vitamina C","Vitamina B3"],"beneficios":["Lavanda","Nocturno","Eleva tu estado de ánimo","Favorece la cognición","Goza de un sueño profundo y relajante con My Mahal Caps","Su mezcla herbal y un sueño reparador puede contribuir a un estado de ánimo óptimo durante el día"],"modo_de_uso":"Tomar una cápsula al día.","habito_elym":"Tómatelas después de la cena, respira, deja el estrés atrás.","sabor":null,"presentaciones":[{"contenido":"60 cápsulas","precio":429.0,"moneda":"MXN","codigo":"PT750","pvn":166}],"imagenes":["https://sacmkbioimyzhiyleqdj.supabase.co/storage/v1/object/sign/Imagenes/hf_20260402_180330_3ac197bf-e937-461d-b982-a290409fb613.png?token=eyJraWQiOiJzdG9yYWdlLXVybC1zaWduaW5nLWtleV9jYWFhYzBmMi1jODQ0LTRkNzMtYjYzYy00Zjg3ZmUyODI4MDIiLCJhbGciOiJIUzI1NiJ9.eyJ1cmwiOiJJbWFnZW5lcy9oZl8yMDI2MDQwMl8xODAzMzBfM2FjMTk3YmYtZTkzNy00NjFkLWI5ODItYTI5MDQwOWZiNjEzLnBuZyIsImlhdCI6MTc3NTE1MzE0NCwiZXhwIjoxODA2Njg5MTQ0fQ.ykympXdX_YE_QVnZESpGG77mrPBhjhi3oxn93zgc4vQ"]},{"id":"bienestar-mahal-gel-corporal-300g","marca":"ISMERELY","activo":true,"producto":"Mahal Gel Corporal Relajante","linea":"Bienestar Line","categoria":"Gel corporal relajante","formato":"gel","uso":"topico","descripcion":"Gel corporal relajante de uso tópico con mezcla de aceites esenciales y extractos naturales.","ingredientes":["Pirul","Romero","Albaca","Árnica","Eucalipto","Salvia","Esencia de lavanda","Aceite esencial de romero","Aceite esencial de eucalipto","Aceite esencial de lavanda","Aceite esencial de canela","Aceite esencial de clavo","Aceite esencial de tomillo","Alcanfor","Mentol"],"beneficios":["Eucalipto","Mezcla de aceites esenciales","Sin parabenos","Aroma mentolado","Sus extractos esenciales naturales pueden ayudar a mantener la comodidad de los músculos y articulaciones","Proporciona una sensación relajante después del baño o antes de hacer ejercicio"],"modo_de_uso":"Aplicarse directamente en el área a tratar en forma de masaje suave.","habito_elym":"Ideal en espalda, pies y rodillas antes y después del ejercicio para un efecto calmante y de relajación.","sabor":null,"presentaciones":[{"contenido":"300 g","precio":429.0,"moneda":"MXN","codigo":"PT772","pvn":166}],"imagenes":["https://sacmkbioimyzhiyleqdj.supabase.co/storage/v1/object/sign/Imagenes/hf_20260402_180624_2a4867ab-814c-4dca-8b2b-41108d905821.png?token=eyJraWQiOiJzdG9yYWdlLXVybC1zaWduaW5nLWtleV9jYWFhYzBmMi1jODQ0LTRkNzMtYjYzYy00Zjg3ZmUyODI4MDIiLCJhbGciOiJIUzI1NiJ9.eyJ1cmwiOiJJbWFnZW5lcy9oZl8yMDI2MDQwMl8xODA2MjRfMmE0ODY3YWItODE0Yy00ZGNhLThiMmItNDExMDhkOTA1ODIxLnBuZyIsImlhdCI6MTc3NTE1MzI1MSwiZXhwIjoxODA2Njg5MjUxfQ.D20vhogBTTbMXKeX7--Wr49I6XKQXjXZVL79MZAeIPk"]},{"id":"bienestar-mahal-gummy-bears-30-gomitas","marca":"ISMERELY","activo":true,"producto":"Mahal Gummy Bears","linea":"Bienestar Line","categoria":"Suplemento alimenticio","formato":"gomitas","uso":"oral","descripcion":"Gomitas suplemento alimenticio para el descanso nocturno a base de L-teanina, Griffonia Simplicifolia y CBN.","ingredientes":["L-teanina","Extracto seco de semilla de Griffonia Simplicifolia","Melatonina","CBN"],"beneficios":["Sabor uva","Equilibrio","Descanso","Nocturno","El CBN y la L-Teanina pueden favorecer el mantenimiento normal de los ciclos del sueño","La Griffonia Simplicifolia puede fomentar la paciencia, tranquilidad y calma de tu día a día"],"modo_de_uso":"Tomar 1 gomita 30 minutos antes de dormir.","habito_elym":"Serena tu mente y cuerpo al terminar el día, dándole el bienestar que necesita a tu descanso con Mahal Gummys.","sabor":"Uva","presentaciones":[{"contenido":"30 gomitas de 3 g c/u","precio":999.0,"moneda":"MXN","codigo":"PT786","pvn":387}],"imagenes":["https://sacmkbioimyzhiyleqdj.supabase.co/storage/v1/object/sign/Imagenes/hf_20260402_180824_56f6eb3d-46c2-4d3f-a250-964f99473b9d.png?token=eyJraWQiOiJzdG9yYWdlLXVybC1zaWduaW5nLWtleV9jYWFhYzBmMi1jODQ0LTRkNzMtYjYzYy00Zjg3ZmUyODI4MDIiLCJhbGciOiJIUzI1NiJ9.eyJ1cmwiOiJJbWFnZW5lcy9oZl8yMDI2MDQwMl8xODA4MjRfNTZmNmViM2QtNDZjMi00ZDNmLWEyNTAtOTY0Zjk5NDczYjlkLnBuZyIsImlhdCI6MTc3NTE1MzM3MSwiZXhwIjoxODA2Njg5MzcxfQ.WqjEWMecSJpZrDEcy2MR_ZgepctIPAGZ_1EBPJVsrNs"]},{"id":"bienestar-my-riury-caps-60-capsulas","marca":"ISMERELY","activo":true,"producto":"My Riury Caps","linea":"Bienestar Line","categoria":"Suplemento alimenticio","formato":"capsulas","uso":"oral","descripcion":"Suplemento alimenticio en cápsula a base de cola de caballo, taray y palo azul.","ingredientes":["Cola de caballo","Guásimo","Estearato de magnesio","Pelos de elote","Taray","Palo azul","Cáscara sagrada"],"beneficios":["Taray","Cola de caballo","Buen funcionamiento de las vías urinarias","Equilibrio","Contribuye al bienestar y al equilibrio general del organismo","Formulado con ingredientes que pueden optimizar el equilibrio natural del sistema urinario","El Taray puede poseer propiedades antibacterianas y antivirales para combatir infecciones en el sistema urinario"],"modo_de_uso":"Tomar una cápsula al día.","habito_elym":"El Taray puede poseer propiedades antibacterianas y antivirales, lo que lo convierte en un fuerte aliado para combatir infecciones en el sistema urinario.","sabor":null,"presentaciones":[{"contenido":"60 cápsulas","precio":429.0,"moneda":"MXN","codigo":"PT749","pvn":166}],"imagenes":["https://sacmkbioimyzhiyleqdj.supabase.co/storage/v1/object/sign/Imagenes/hf_20260402_181131_07e71bc0-9bd4-4202-8919-3123eaa6dc72.png?token=eyJraWQiOiJzdG9yYWdlLXVybC1zaWduaW5nLWtleV9jYWFhYzBmMi1jODQ0LTRkNzMtYjYzYy00Zjg3ZmUyODI4MDIiLCJhbGciOiJIUzI1NiJ9.eyJ1cmwiOiJJbWFnZW5lcy9oZl8yMDI2MDQwMl8xODExMzFfMDdlNzFiYzAtOWJkNC00MjAyLTg5MTktMzEyM2VhYTZkYzcyLnBuZyIsImlhdCI6MTc3NTE1MzY0OCwiZXhwIjoxODA2Njg5NjQ4fQ.h_jAHFwt13nVMHFiLkXaoLANMkG9g1q6cktHqNMxV2Q"]},{"id":"bienestar-my-pro-st-caps-60-capsulas","marca":"ISMERELY","activo":true,"producto":"My Pro-ST Caps","linea":"Bienestar Line","categoria":"Suplemento alimenticio","formato":"capsulas","uso":"oral","descripcion":"Suplemento alimenticio en cápsula a base de palo azul, guásimo y taray.","ingredientes":["Semilla de calabaza","Arándano","Noni","Goji","Pingüica","Doradilla","Palo azul","Cola de caballo","Taray","Mangostán","Pelos de elote","Guásimo","Buchu","Estearato de magnesio"],"beneficios":["Taray","Palo azul","Confort","Goji","Enriquecido con semilla de calabaza y cola de caballo, diseñado para apoyar el bienestar de la próstata y el sistema urinario","Sus ingredientes suaves y naturales pueden mejorar la función urinaria y promover un equilibrio integral"],"modo_de_uso":"Tomar una cápsula al día.","habito_elym":"El Estearato de magnesio participa en la síntesis de proteínas y en reacciones enzimáticas esenciales dentro de las células prostáticas, interviniendo en la regulación del metabolismo.","sabor":null,"presentaciones":[{"contenido":"60 cápsulas","precio":429.0,"moneda":"MXN","codigo":"PT756","pvn":166}],"imagenes":["https://sacmkbioimyzhiyleqdj.supabase.co/storage/v1/object/sign/Imagenes/hf_20260402_181507_cf14d0e5-401e-4a77-9918-a966a6eb83e3.png?token=eyJraWQiOiJzdG9yYWdlLXVybC1zaWduaW5nLWtleV9jYWFhYzBmMi1jODQ0LTRkNzMtYjYzYy00Zjg3ZmUyODI4MDIiLCJhbGciOiJIUzI1NiJ9.eyJ1cmwiOiJJbWFnZW5lcy9oZl8yMDI2MDQwMl8xODE1MDdfY2YxNGQwZTUtNDAxZS00YTc3LTk5MTgtYTk2NmE2ZWI4M2UzLnBuZyIsImlhdCI6MTc3NTE1Mzk1MywiZXhwIjoxODA2Njg5OTUzfQ.TNqUGjNiwUopSm3lBw3I2ypClIvK6oC2OiKEn54JGPw"]},{"id":"bienestar-intens-mn-capsulas-30","marca":"ISMERELY","activo":true,"producto":"Intens-Mn","linea":"Bienestar Line","categoria":"Suplemento alimenticio","formato":"capsulas","uso":"oral","descripcion":"Suplemento alimenticio en cápsula a base de tribulus, ashwagandha y zarzaparrilla.","ingredientes":["Calcio de Coral","Vitamina B3","Vitamina B2","Vitamina E","Vitamina B6","Vitamina A","Vitamina D3","Vitamina B1","Vitamina C","Tribulus","Ashwagandha","Maca","Zarzaparrilla"],"beneficios":["Calcio de coral","Adaptógenos","Vigorosidad","Fuerza física","La Ashwagandha puede brindar una mayor sensación de bienestar, fuerza y energía después de una actividad física","Contribuye a una vida activa y saludable","Auxiliar en el mantenimiento de la vitalidad"],"modo_de_uso":"Tomar una cápsula por la mañana.","habito_elym":"La maca se considera un adaptógeno que apoya al cuerpo a adaptarse al estrés y aumentar la resistencia física y mental. Tómalo en el día y será tu aliado todas las noches.","sabor":null,"presentaciones":[{"contenido":"30 cápsulas","precio":599.0,"moneda":"MXN","codigo":"PT796","pvn":232}],"imagenes":["https://sacmkbioimyzhiyleqdj.supabase.co/storage/v1/object/sign/Imagenes/hf_20260402_181954_79950856-62fb-4cf8-a6d1-394bd664c920.png?token=eyJraWQiOiJzdG9yYWdlLXVybC1zaWduaW5nLWtleV9jYWFhYzBmMi1jODQ0LTRkNzMtYjYzYy00Zjg3ZmUyODI4MDIiLCJhbGciOiJIUzI1NiJ9.eyJ1cmwiOiJJbWFnZW5lcy9oZl8yMDI2MDQwMl8xODE5NTRfNzk5NTA4NTYtNjJmYi00Y2Y4LWE2ZDEtMzk0YmQ2NjRjOTIwLnBuZyIsImlhdCI6MTc3NTE1NDA2NSwiZXhwIjoxODA2NjkwMDY1fQ.wXN3f5j9ZHB9KpT14bUmL6Dt5pFpl3ZH1Vu_fFVfCpo"]},{"id":"bienestar-my-lidy-fell-caps-60-capsulas","marca":"ISMERELY","activo":true,"producto":"My Lidy Fell Caps","linea":"Bienestar Line","categoria":"Suplemento alimenticio","formato":"capsulas","uso":"oral","descripcion":"Suplemento alimenticio en cápsula a base de camote silvestre, avena y perejil.","ingredientes":["Camote silvestre","Avena","Perejil","Calcio","Magnesio","Vitamina E","Vitamina B1"],"beneficios":["Camote silvestre","Avena","Salud hormonal","Climaterio","Aporta nutrientes que favorecen el funcionamiento hormonal natural","Favorece el bienestar durante el ciclo femenino","La diosgenina presente en el camote silvestre puede actuar como precursor hormonal, apoyando al bienestar en los síntomas de la menopausia"],"modo_de_uso":"Tomar una cápsula por la mañana y otra por la noche.","habito_elym":"La diosgenina presente en el camote silvestre puede actuar como precursor hormonal, por lo cual apoya al bienestar en los síntomas de la menopausia.","sabor":null,"presentaciones":[{"contenido":"60 cápsulas","precio":429.0,"moneda":"MXN","codigo":"PT757","pvn":166}],"imagenes":["https://sacmkbioimyzhiyleqdj.supabase.co/storage/v1/object/sign/Imagenes/hf_20260402_182149_434a0a7e-ffb6-4f7c-a874-fe34f73dcce2.png?token=eyJraWQiOiJzdG9yYWdlLXVybC1zaWduaW5nLWtleV9jYWFhYzBmMi1jODQ0LTRkNzMtYjYzYy00Zjg3ZmUyODI4MDIiLCJhbGciOiJIUzI1NiJ9.eyJ1cmwiOiJJbWFnZW5lcy9oZl8yMDI2MDQwMl8xODIxNDlfNDM0YTBhN2UtZmZiNi00ZjdjLWE4NzQtZmUzNGY3M2RjY2UyLnBuZyIsImlhdCI6MTc3NTE1NDE3NiwiZXhwIjoxODA2NjkwMTc2fQ.TWdR8BVK2PVCg3DPkLZRmfK7HT1XZ4dsN3GHeP3c3G0"]},{"id":"bienestar-s-mn-tabs-3-tabletas","marca":"ISMERELY","activo":true,"producto":"S-MN Tabs","linea":"Bienestar Line","categoria":"Suplemento alimenticio","formato":"tabletas","uso":"oral","descripcion":"Suplemento alimenticio en tableta a base de maca, yin yang huo y muira puama.","ingredientes":["Yin Yang huo","Muira Puama","Cordyceps","Estearato de magnesio","Maca"],"beneficios":["Yin Yang Hou","Adaptógeno","Vigorosidad","Acción rápida (30 min)","Sus ingredientes pueden contribuir a la energía y el rendimiento","La maca puede brindar una mejora a la circulación sanguínea apoyando a la resistencia durante la actividad sexual"],"modo_de_uso":"Tomar una tableta 1 hora antes de la actividad sexual.","habito_elym":"Tómalo 30 min antes, eleva tu energía y haz vibrar tu cuerpo.","sabor":null,"presentaciones":[{"contenido":"3 tabletas","precio":429.0,"moneda":"MXN","codigo":"PT755","pvn":166}],"imagenes":["https://sacmkbioimyzhiyleqdj.supabase.co/storage/v1/object/sign/Imagenes/hf_20260402_182337_5ad188bc-6266-4ef3-9a47-7e2177eb208f.png?token=eyJraWQiOiJzdG9yYWdlLXVybC1zaWduaW5nLWtleV9jYWFhYzBmMi1jODQ0LTRkNzMtYjYzYy00Zjg3ZmUyODI4MDIiLCJhbGciOiJIUzI1NiJ9.eyJ1cmwiOiJJbWFnZW5lcy9oZl8yMDI2MDQwMl8xODIzMzdfNWFkMTg4YmMtNjI2Ni00ZWYzLTlhNDctN2UyMTc3ZWIyMDhmLnBuZyIsImlhdCI6MTc3NTE1NDQwNCwiZXhwIjoxODA2NjkwNDA0fQ.jnIP1SCite1snboEkDuYgIXFDWa3cL-EMHRZI33zVsQ"]},{"id":"bienestar-my-sir-q-caps-60-capsulas","marca":"ISMERELY","activo":true,"producto":"My Sir-Q Caps","linea":"Bienestar Line","categoria":"Suplemento alimenticio","formato":"capsulas","uso":"oral","descripcion":"Suplemento alimenticio en cápsula a base de cola de caballo, semilla de chía y semilla de uva.","ingredientes":["Limón","Semilla de chía","Rusco","Semilla de uva","Lecitina de soya","Cola de caballo","Hamamelis","Chaya"],"beneficios":["Semilla de chía","Limón","Buena circulación","Confort","Puede contribuir al bienestar de una buena salud integral, incluyendo al sistema cardiovascular","Complementa con una dieta equilibrada","Colabora con la buena circulación y el buen funcionamiento del organismo"],"modo_de_uso":"Tomar una cápsula por la mañana y otra por la noche.","habito_elym":"Colabora con la buena circulación y el buen funcionamiento del organismo.","sabor":null,"presentaciones":[{"contenido":"60 cápsulas","precio":429.0,"moneda":"MXN","codigo":"PT759","pvn":166}],"imagenes":["https://sacmkbioimyzhiyleqdj.supabase.co/storage/v1/object/sign/Imagenes/hf_20260403_000300_fbf007fb-77da-4560-8a24-58e93f987833.png?token=eyJraWQiOiJzdG9yYWdlLXVybC1zaWduaW5nLWtleV9jYWFhYzBmMi1jODQ0LTRkNzMtYjYzYy00Zjg3ZmUyODI4MDIiLCJhbGciOiJIUzI1NiJ9.eyJ1cmwiOiJJbWFnZW5lcy9oZl8yMDI2MDQwM18wMDAzMDBfZmJmMDA3ZmItNzdkYS00NTYwLThhMjQtNThlOTNmOTg3ODMzLnBuZyIsImlhdCI6MTc3NTE3NDY4MCwiZXhwIjoxODA2NzEwNjgwfQ.16l4ZCFAFLUjaLr4VMlHGKm6ugSjE1gHF5e78N2n-LA"]},{"id":"bienestar-a-coff-liquido-250ml","marca":"ISMERELY","activo":true,"producto":"A-Coff","linea":"Bienestar Line","categoria":"Suplemento alimenticio","formato":"liquido","uso":"oral","descripcion":"Suplemento alimenticio líquido a base de miel de abeja, propóleo y extracto de gordolobo.","ingredientes":["Miel de abeja","Propóleo","Vitamina C","Extracto de gordolobo","Sauco","Bugambilia","Malva","Limón","Cebolla morada"],"beneficios":["Miel de abeja","Limón","Respiración","Descongestión","Elaborado con miel y bugambilia, es una opción natural que puede aliviar irritaciones en la garganta","La miel puede suavizar y calmar la garganta, ofreciéndote un cuidado suave, nutritivo y lleno de los beneficios de la naturaleza"],"modo_de_uso":"Adultos: 2 cucharadas al día. Niños: 1 cucharadita al día.","habito_elym":"Mezclar DTX OXIGEN con A-Coff a tu bebida caliente. Puede favorecer tu descongestión.","sabor":null,"presentaciones":[{"contenido":"250 ml","precio":429.0,"moneda":"MXN","codigo":"PT758","pvn":166}],"imagenes":["https://sacmkbioimyzhiyleqdj.supabase.co/storage/v1/object/sign/Imagenes/hf_20260403_000607_fb01ca5b-41dc-4606-879c-9a6cf4b61ab2.png?token=eyJraWQiOiJzdG9yYWdlLXVybC1zaWduaW5nLWtleV9jYWFhYzBmMi1jODQ0LTRkNzMtYjYzYy00Zjg3ZmUyODI4MDIiLCJhbGciOiJIUzI1NiJ9.eyJ1cmwiOiJJbWFnZW5lcy9oZl8yMDI2MDQwM18wMDA2MDdfZmIwMWNhNWItNDFkYy00NjA2LTg3OWMtOWE2Y2Y0YjYxYWIyLnBuZyIsImlhdCI6MTc3NTE3NDgyMCwiZXhwIjoxODA2NzEwODIwfQ.SoyYTfilba0X02ePmb8YDAjEiPraBmpsO8FSIit_vPg"]},{"id":"bienestar-x-pro-spray-60ml","marca":"ISMERELY","activo":true,"producto":"X-Pro","linea":"Bienestar Line","categoria":"Suplemento alimenticio","formato":"spray","uso":"oral","descripcion":"Tintura de propóleo y eucalipto en spray.","ingredientes":["Propóleo","Alcohol grado alimenticio","Eucalipto"],"beneficios":["Eucalipto","Equilibrio","El propóleo puede proporcionar sensación de alivio y desinflamación de la garganta","El eucalipto puede poseer propiedades antisépticas que colaboran a la desinfección de heridas"],"modo_de_uso":"Usar de 3 a 5 atomizaciones por día, vía oral.","habito_elym":"Úsalo 10 minutos antes de hablar en público y conquista a tu audiencia.","sabor":null,"presentaciones":[{"contenido":"60 ml","precio":429.0,"moneda":"MXN","codigo":"PT802","pvn":166}],"imagenes":["https://sacmkbioimyzhiyleqdj.supabase.co/storage/v1/object/sign/Imagenes/hf_20260403_000643_92c17d56-1d4e-4ebe-965c-4efa837b06e6.png?token=eyJraWQiOiJzdG9yYWdlLXVybC1zaWduaW5nLWtleV9jYWFhYzBmMi1jODQ0LTRkNzMtYjYzYy00Zjg3ZmUyODI4MDIiLCJhbGciOiJIUzI1NiJ9.eyJ1cmwiOiJJbWFnZW5lcy9oZl8yMDI2MDQwM18wMDA2NDNfOTJjMTdkNTYtMWQ0ZS00ZWJlLTk2NWMtNGVmYTgzN2IwNmU2LnBuZyIsImlhdCI6MTc3NTE3NDg5OCwiZXhwIjoxODA2NzEwODk4fQ.1AHzvYTy3zEkZVfUB3OQo0Irc8QEWfjLXBWl_vvwSPI"]},{"tipo":"separador_linea","linea":"Avancely Line","descripcion":"Cuidar tu piel es un acto de amor propio. En Avancely Line, combinamos ingredientes activos de última generación con el poder de la naturaleza para ofrecerte una línea de cosméticos diseñada para transformar tu rutina de belleza en un ritual placentero y eficaz.","imagen":null},{"id":"avancely-ag-coloidal","marca":"ISMERELY","activo":true,"producto":"AG Coloidal","linea":"Avancely Line","categoria":"Solución coloidal","formato":"liquido","uso":"topico","descripcion":"Solución de nanopartículas de plata coloidal.","ingredientes":["Agua destilada","Nanopartículas de plata coloidal de 1 a 10 nanómetros con iones de plata (20 ppm)"],"beneficios":["Iones","Agua destilada","Participa en la eliminación de microorganismos","Colabora en el proceso de cicatrización","Colabora en el proceso de la cicatrización","Puede contribuir al control del acné"],"modo_de_uso":"Aplicarse directamente en el área a tratar.","habito_elym":"Úsalo como un complemento en tu rutina del cuidado de la piel. Desmaquíllarte cada noche con AG Coloidal y dale un toque de frescura a tu piel.","sabor":null,"presentaciones":[{"contenido":"250 ml","precio":429.0,"moneda":"MXN","codigo":"PT765","pvn":166},{"contenido":"500 ml","precio":549.0,"moneda":"MXN","codigo":"PT779","pvn":213}],"imagenes":["https://sacmkbioimyzhiyleqdj.supabase.co/storage/v1/object/sign/Imagenes/hf_20260403_000936_89aec92a-46df-433f-8e0a-81f91b7eff14.png?token=eyJraWQiOiJzdG9yYWdlLXVybC1zaWduaW5nLWtleV9jYWFhYzBmMi1jODQ0LTRkNzMtYjYzYy00Zjg3ZmUyODI4MDIiLCJhbGciOiJIUzI1NiJ9.eyJ1cmwiOiJJbWFnZW5lcy9oZl8yMDI2MDQwM18wMDA5MzZfODlhZWM5MmEtNDZkZi00MzNmLThlMGEtODFmOTFiN2VmZjE0LnBuZyIsImlhdCI6MTc3NTE3NTAzNSwiZXhwIjoxODA2NzExMDM1fQ.ARo5BBSXWDf-EdA56LBo51cG9-W9PYAjO4UU84WRA3Y"]},{"id":"avancely-serum-vitamina-c-30ml","marca":"ISMERELY","activo":true,"producto":"Serum Vitamina C","linea":"Avancely Line","categoria":"Cosmético","formato":"serum","uso":"topico","descripcion":"Sérum facial Repara y Revitaliza a base de ácido hialurónico y vitamina E.","ingredientes":["Terminalia ferdinandiana","Ácido hialurónico pantenol","Extracto de Aloe Vera","Alantoína","Extracto de hammamelis","Vitamina E"],"beneficios":["Vitamina C","Vitamina E","Ayuda a la piel","Ácido hialurónico","Ayuda a unificar el tono y aporta luminosidad, haciendo que la piel se vea más radiante y saludable","Neutraliza los radicales libres causados por la contaminación, el sol y el estrés, lo que ayuda a prevenir el envejecimiento prematuro"],"modo_de_uso":"Colocar de 5 a 10 gotas en la palma de la mano. Aplicar en la cara y el cuello con las llemas de los dedos sobre la piel limpia y seca, haciendo masajes circulares evitando el contorno de los ojos. Luego aplicar tu crema de diario, puede ser en el día o en la noche.","habito_elym":"La vitamina C interviene en la síntesis de colágeno, al actuar como cofactor enzimático en la formación de fibras estructurales que mantienen la integridad de la dermis.","sabor":null,"presentaciones":[{"contenido":"30 ml","precio":799.0,"moneda":"MXN","codigo":"PT784","pvn":310}],"imagenes":["https://sacmkbioimyzhiyleqdj.supabase.co/storage/v1/object/sign/Imagenes/hf_20260403_001143_74b62688-ce61-4b86-b404-ef632c068fae.png?token=eyJraWQiOiJzdG9yYWdlLXVybC1zaWduaW5nLWtleV9jYWFhYzBmMi1jODQ0LTRkNzMtYjYzYy00Zjg3ZmUyODI4MDIiLCJhbGciOiJIUzI1NiJ9.eyJ1cmwiOiJJbWFnZW5lcy9oZl8yMDI2MDQwM18wMDExNDNfNzRiNjI2ODgtY2U2MS00Yjg2LWI0MDQtZWY2MzJjMDY4ZmFlLnBuZyIsImlhdCI6MTc3NTE3NTE2MSwiZXhwIjoxODA2NzExMTYxfQ.xpTjmToDZXL66-W71_SyNqlUgnnsC9-EIUYpX1uHiSU"]},{"id":"avancely-adn-vegetal-crema-50ml","marca":"ISMERELY","activo":true,"producto":"ADN Vegetal Q10 + Retinol Cream","linea":"Avancely Line","categoria":"Cosmético","formato":"crema","uso":"topico","descripcion":"Crema facial Q10 + Retinol con ADN Vegetal, coenzima Q10 y colágeno.","ingredientes":["ADN Vegetal","Coenzima Q10","Vitamina E","Colágeno"],"beneficios":["Colágeno","Piel mixta","Antioxidante","Retarda el envejecimiento","Contiene un gran poder antioxidante","Promueve la producción de colágeno y elastina","Retarda el envejecimiento"],"modo_de_uso":"Aplica por la noche dando un masaje suave durante 3 minutos.","habito_elym":"La coenzima Q10 participa en el proceso de producción energética en las mitocondrias de las células cutáneas, contribuyendo a la estructura de la piel.","sabor":null,"presentaciones":[{"contenido":"50 ml","precio":599.0,"moneda":"MXN","codigo":"PT768","pvn":232}],"imagenes":["https://sacmkbioimyzhiyleqdj.supabase.co/storage/v1/object/sign/Imagenes/hf_20260403_001354_de2b3bf5-86f1-4fab-9c96-2a205c5d6d49.png?token=eyJraWQiOiJzdG9yYWdlLXVybC1zaWduaW5nLWtleV9jYWFhYzBmMi1jODQ0LTRkNzMtYjYzYy00Zjg3ZmUyODI4MDIiLCJhbGciOiJIUzI1NiJ9.eyJ1cmwiOiJJbWFnZW5lcy9oZl8yMDI2MDQwM18wMDEzNTRfZGUyYjNiZjUtODZmMS00ZmFiLTljOTYtMmEyMDVjNWQ2ZDQ5LnBuZyIsImlhdCI6MTc3NTE3NTMzMSwiZXhwIjoxODA2NzExMzMxfQ.4TCb8oTLwGmjjqhQxDL3SaxYI90abSFm5yOYgyvDLyo"]},{"id":"avancely-regenerador-celular-40ml","marca":"ISMERELY","activo":true,"producto":"Regenerador Celular","linea":"Avancely Line","categoria":"Cosmético","formato":"serum","uso":"topico","descripcion":"Sérum facial Regenerador Celular a base de ácido hialurónico, botox, colágeno y elastina.","ingredientes":["Colágeno","Suero facial","Elastina","Ácido hialurónico","Botox"],"beneficios":["Brócoli","Ácido hialurónico","Regenera","Piel seca","Disminuye la aparición de arrugas, líneas de expresión y flacidez","Mejora la elasticidad y firmeza de la piel"],"modo_de_uso":"Esparcir por el rostro una gota del producto antes del maquillaje o antes de dormir.","habito_elym":"El pantenol penetra en las capas superficiales de la piel y se convierte en ácido pantoténico, esencial para la regeneración celular y la producción de lípidos epidérmicos.","sabor":null,"presentaciones":[{"contenido":"40 ml","precio":599.0,"moneda":"MXN","codigo":"PT767","pvn":232}],"imagenes":["https://sacmkbioimyzhiyleqdj.supabase.co/storage/v1/object/sign/Imagenes/hf_20260403_001604_fbf96c4f-d54b-4d6b-b1e3-870d1731575d.png?token=eyJraWQiOiJzdG9yYWdlLXVybC1zaWduaW5nLWtleV9jYWFhYzBmMi1jODQ0LTRkNzMtYjYzYy00Zjg3ZmUyODI4MDIiLCJhbGciOiJIUzI1NiJ9.eyJ1cmwiOiJJbWFnZW5lcy9oZl8yMDI2MDQwM18wMDE2MDRfZmJmOTZjNGYtZDU0Yi00ZDZiLWIxZTMtODcwZDE3MzE1NzVkLnBuZyIsImlhdCI6MTc3NTE3NTQwOCwiZXhwIjoxODA2NzExNDA4fQ.FQGMdnyofyiZwzfLM0eQoSJQrHVTHYZV51vcfv-hZf0"]},{"id":"avancely-microexfoliante-cream-60ml","marca":"ISMERELY","activo":true,"producto":"Microexfoliante Cream","linea":"Avancely Line","categoria":"Cosmético","formato":"crema","uso":"topico","descripcion":"Crema microexfoliante para microdermoabrasión a base de colágeno y elastina.","ingredientes":["Microesferas de colágeno","Elástina","Aceite de almendras"],"beneficios":["Colágeno","Aceite de almendras","Regenera","Ayuda a la piel","Formulado con microesferas de colageína que exfolian delicadamente la piel, promoviendo la regeneración celular y aportando elasticidad e hidratación","Ideal para todo tipo de piel","Limpieza profunda y renovación suave"],"modo_de_uso":"Usar dos veces por semana. Aplicar en cara y cuello dando un ligero masaje sobre la piel limpia y seca.","habito_elym":"Las microesferas de colágeno interactúan con la superficie cutánea para favorecer la hidratación y facilitar la absorción de nutrientes en capas superficiales de la piel.","sabor":null,"presentaciones":[{"contenido":"60 ml","precio":319.0,"moneda":"MXN","codigo":"PT766","pvn":124}],"imagenes":["https://sacmkbioimyzhiyleqdj.supabase.co/storage/v1/object/sign/Imagenes/hf_20260403_002400_3d1ab5bc-7e5c-403b-a8fa-7e71b9ea4b75.png?token=eyJraWQiOiJzdG9yYWdlLXVybC1zaWduaW5nLWtleV9jYWFhYzBmMi1jODQ0LTRkNzMtYjYzYy00Zjg3ZmUyODI4MDIiLCJhbGciOiJIUzI1NiJ9.eyJ1cmwiOiJJbWFnZW5lcy9oZl8yMDI2MDQwM18wMDI0MDBfM2QxYWI1YmMtN2U1Yy00MDNiLWE4ZmEtN2U3MWI5ZWE0Yjc1LnBuZyIsImlhdCI6MTc3NTE3NTkzOSwiZXhwIjoxODA2NzExOTM5fQ.fK0kAWvO5OuQN5gxcQ9Q7TVl6L91BTfDdH8swx67jaQ"]},{"id":"avancely-baba-caracol-rosa-mosqueta-120g","marca":"ISMERELY","activo":true,"producto":"Baba de Caracol + Rosa Mosqueta","linea":"Avancely Line","categoria":"Cosmético","formato":"crema","uso":"topico","descripcion":"Crema facial a base de baba de caracol y rosa mosqueta.","ingredientes":["Baba de caracol","Rosa Mosqueta","Semilla de uva","Vitamina E","Aceite de almendras","Elastina"],"beneficios":["Baba de caracol","Aceite de almendras","Piel grasa","Destapa poros","Retiene la humedad en la piel, manteniéndola suave y elástica","Efecto anti acné gracias al ácido glicólico, exfolia suavemente la piel, destapa poros y reduce brotes"],"modo_de_uso":"Aplicar en la cara limpia y seca, por la mañana y por la noche.","habito_elym":"Contiene ácido glicólico que participan en la renovación celular, interacción con la matriz dérmica y mantenimiento de la textura cutánea.","sabor":null,"presentaciones":[{"contenido":"120 g","precio":429.0,"moneda":"MXN","codigo":"PT770","pvn":166}],"imagenes":["https://sacmkbioimyzhiyleqdj.supabase.co/storage/v1/object/sign/Imagenes/hf_20260403_002231_244849d3-009e-4be8-8e2a-a40b1913e83d.png?token=eyJraWQiOiJzdG9yYWdlLXVybC1zaWduaW5nLWtleV9jYWFhYzBmMi1jODQ0LTRkNzMtYjYzYy00Zjg3ZmUyODI4MDIiLCJhbGciOiJIUzI1NiJ9.eyJ1cmwiOiJJbWFnZW5lcy9oZl8yMDI2MDQwM18wMDIyMzFfMjQ0ODQ5ZDMtMDA5ZS00YmU4LThlMmEtYTQwYjE5MTNlODNkLnBuZyIsImlhdCI6MTc3NTE3NTk5NCwiZXhwIjoxODA2NzExOTk0fQ.zcPyXJCxSFvBWwaKg1zPq4IJXNpjfsuI1KktolpLF_k"]},{"id":"avancely-botox-acido-hialuronico-120g","marca":"ISMERELY","activo":true,"producto":"Botox + Ácido Hialurónico","linea":"Avancely Line","categoria":"Cosmético","formato":"crema","uso":"topico","descripcion":"Crema facial a base de botox, ácido hialurónico y colágeno. Recomendable para mayores de 35 años y piel mixta.","ingredientes":["Botox","Ácido hialurónico","Elastina","Colágeno","Aceite de oliva","Aceite de semilla de uva"],"beneficios":["+35 años recomendable","Piel mixta","Rellena arrugas","Favorece la cicatrización","Ayuda a rellenar arrugas y líneas finas, dando un aspecto más liso y firme","Estimula la producción de colágeno, lo que mejora la firmeza de la piel"],"modo_de_uso":"Aplicar en la cara limpia y seca, por la mañana y por la noche.","habito_elym":"El ácido hialurónico tiene la capacidad de atraer y retener agua en la matriz extracelular, contribuyendo a la estructura de la piel.","sabor":null,"presentaciones":[{"contenido":"120 g","precio":429.0,"moneda":"MXN","codigo":"PT769","pvn":166}],"imagenes":["https://sacmkbioimyzhiyleqdj.supabase.co/storage/v1/object/sign/Imagenes/hf_20260403_002733_395fd174-d0a6-4977-a73c-0eafff23c968.png?token=eyJraWQiOiJzdG9yYWdlLXVybC1zaWduaW5nLWtleV9jYWFhYzBmMi1jODQ0LTRkNzMtYjYzYy00Zjg3ZmUyODI4MDIiLCJhbGciOiJIUzI1NiJ9.eyJ1cmwiOiJJbWFnZW5lcy9oZl8yMDI2MDQwM18wMDI3MzNfMzk1ZmQxNzQtZDBhNi00OTc3LWE3M2MtMGVhZmZmMjNjOTY4LnBuZyIsImlhdCI6MTc3NTE3NjEwNywiZXhwIjoxODA2NzEyMTA3fQ.88fQVGoyq6JxzBsI_avkNQtYW5H5T01t8EG6m5OfprI"]},{"id":"avancely-jalea-real-vitamina-e-120g","marca":"ISMERELY","activo":true,"producto":"Jalea Real + Vitamina E","linea":"Avancely Line","categoria":"Cosmético","formato":"crema","uso":"topico","descripcion":"Crema facial a base de jalea real, vitamina E y colágeno.","ingredientes":["Colágeno","Elastina","Vitamina E","Miel","Aceite de semilla de uva","Jalea Real","Vitamina C"],"beneficios":["Jalea real","Vitamina E","Piel seca","Retiene humedad","La jalea real ayuda a retener la humedad en la piel, dejándola suave y flexible","Revitaliza la piel opaca o cansada, dándole un aspecto más saludable y radiante"],"modo_de_uso":"Aplicar en la cara limpia y seca, por la mañana y por la noche.","habito_elym":"La vitamina E se incorpora a las membranas celulares de la piel, donde actúa como estabilizador lipídico y participa en la protección de componentes celulares frente a la oxidación.","sabor":null,"presentaciones":[{"contenido":"120 g","precio":429.0,"moneda":"MXN","codigo":"PT773","pvn":166}],"imagenes":["https://sacmkbioimyzhiyleqdj.supabase.co/storage/v1/object/sign/Imagenes/hf_20260403_002925_3cfb2b7f-de8f-487e-ac20-fc6a793dbcb2.png?token=eyJraWQiOiJzdG9yYWdlLXVybC1zaWduaW5nLWtleV9jYWFhYzBmMi1jODQ0LTRkNzMtYjYzYy00Zjg3ZmUyODI4MDIiLCJhbGciOiJIUzI1NiJ9.eyJ1cmwiOiJJbWFnZW5lcy9oZl8yMDI2MDQwM18wMDI5MjVfM2NmYjJiN2YtZGU4Zi00ODdlLWFjMjAtZmM2YTc5M2RiY2IyLnBuZyIsImlhdCI6MTc3NTE3NjIzMywiZXhwIjoxODA2NzEyMjMzfQ.8LI3QjV3m0ZCenxGWn-wezcxU6crvd4KpBD42yrC1p4"]},{"id":"avancely-colageno-elastina-120g","marca":"ISMERELY","activo":true,"producto":"Colágeno + Elastina","linea":"Avancely Line","categoria":"Cosmético","formato":"crema","uso":"topico","descripcion":"Crema facial a base de colágeno, elastina y jalea real.","ingredientes":["Colágeno","Elastina","Vitamina E","Aceite de almendras","Aceite de semilla de uva","Jalea Real"],"beneficios":["Colágeno","Elastina","Piel joven","Piel mixta","El colágeno y la elastina son proteínas estructurales de la piel que ayudan a mantenerla firme y flexible"],"modo_de_uso":"Aplicar en la cara limpia y seca, por la mañana y por la noche.","habito_elym":"Ambas proteínas forman parte de la matriz extracelular dérmica, donde proporcionan soporte estructural y participan en la elasticidad y firmeza de la piel.","sabor":null,"presentaciones":[{"contenido":"120 g","precio":429.0,"moneda":"MXN","codigo":"PT771","pvn":166}],"imagenes":["https://sacmkbioimyzhiyleqdj.supabase.co/storage/v1/object/sign/Imagenes/hf_20260403_003131_fd8c7ec1-da43-4f04-abbc-8c3220ac3a97.png?token=eyJraWQiOiJzdG9yYWdlLXVybC1zaWduaW5nLWtleV9jYWFhYzBmMi1jODQ0LTRkNzMtYjYzYy00Zjg3ZmUyODI4MDIiLCJhbGciOiJIUzI1NiJ9.eyJ1cmwiOiJJbWFnZW5lcy9oZl8yMDI2MDQwM18wMDMxMzFfZmQ4YzdlYzEtZGE0My00ZjA0LWFiYmMtOGMzMjIwYWMzYTk3LnBuZyIsImlhdCI6MTc3NTE3NjM0NywiZXhwIjoxODA2NzEyMzQ3fQ.Y8ScuC1wShsFQs2fZlyc_5fdiebz1aqqFauOX_NQIhQ"]},{"id":"avancely-yang-esencia-eucalipto-60ml","marca":"ISMERELY","activo":true,"producto":"Yang","linea":"Avancely Line","categoria":"Esencia relajante","formato":"spray","uso":"topico","descripcion":"Esencia relajante de eucalipto en spray. Uso cutáneo, desinfección aeróbica y desodorante de alcoba.","ingredientes":["Extracto de eucalipto","Mentol","Clavo en aceite","Alcanfor"],"beneficios":["Relajante muscular","Equilibrio","Térmico","Repelente","Ayuda a minimizar las molestias musculares","Proporciona sensación de frescura, su mezcla de aceites esenciales da un efecto calmante","Excelente para dolores musculares o un masaje relajante","También funciona como repelente de mosquitos natural"],"modo_de_uso":"Cutáneo: aplique directamente en el área a tratar (pecho, pies, espalda, brazos, etc.). Desinfección aeróbica: rociar en áreas cerradas (salas, habitación, baño y clóset). Desodorante de alcoba: rociar sobre la ropa de cama (almohadas, edredones, etc.).","habito_elym":"Los compuestos del eucalipto actúan sobre los receptores sensoriales cutáneos y olfativos, promoviendo una sensación de frescor y relajación corporal. También funciona como un repelente de mosquitos natural.","advertencias":["Evite el contacto con los ojos","Suspenda el uso en caso de irritación o enrojecimiento"],"sabor":null,"presentaciones":[{"contenido":"60 ml","precio":429.0,"moneda":"MXN","codigo":"PT797","pvn":166}],"imagenes":["https://sacmkbioimyzhiyleqdj.supabase.co/storage/v1/object/sign/Imagenes/hf_20260403_004238_f191f96a-d39c-4763-b18f-024ab3df9830.png?token=eyJraWQiOiJzdG9yYWdlLXVybC1zaWduaW5nLWtleV9jYWFhYzBmMi1jODQ0LTRkNzMtYjYzYy00Zjg3ZmUyODI4MDIiLCJhbGciOiJIUzI1NiJ9.eyJ1cmwiOiJJbWFnZW5lcy9oZl8yMDI2MDQwM18wMDQyMzhfZjE5MWY5NmEtZDM5Yy00NzYzLWIxOGYtMDI0YWIzZGY5ODMwLnBuZyIsImlhdCI6MTc3NTE3NzAxMiwiZXhwIjoxODA2NzEzMDEyfQ.-gs5KQfhzs5jKz-9YRlcUQoAn_l-Sij0UYej88AFl7s"]},{"tipo":"separador_linea","linea":"Vybes","descripcion":"Vybes es la línea de bienestar emocional y sensorial de ISMERELY. Productos diseñados para elevar tu energía, mejorar tu estado de ánimo y conectar mente, cuerpo y espíritu en cada momento del día.","imagen":null},{"id":"vybes-lacto-ignize-polvo-500g","marca":"ISMERELY","activo":true,"producto":"Lacto Ignize","linea":"Vybes","categoria":"Suplemento alimenticio","formato":"polvo","uso":"oral","descripcion":"Suplemento alimenticio en polvo a base de suero de leche sabor vainilla.","ingredientes":["Suero de leche concentrado","Saborizante de vainilla","Cloruro","Potasio","Magnesio","Fosforo","Hierro","Zinc","Leucina","Isoleucina","Valina","Lisina","Treonina","Histidina","Metionina","Triptófano","Ácido glutámico","Ácido aspártico","Prolina","Serina","Alanina","Tirosina","Arginina","Glicina","Cisteína","L-glutamina"],"beneficios":["Sin gluten","Suplemento cetogénico","Sin azúcar","Asimilación rápida","Alto en glutamina","Rica en minerales","Bajo en grasas y carbohidratos","Aminoácidos esenciales","Apoya al crecimiento muscular, la pérdida de grasa y la recuperación post entrenamiento","Complemento alimenticio útil para personas con necesidades proteicas elevadas"],"modo_de_uso":"Disolver 25 g en 250 ml de agua o leche una vez por día. No exceder la porción recomendada.","habito_elym":"El suero de leche concentrado aporta aminoácidos esenciales de alto valor biológico, incluyendo BCAAs (leucina, isoleucina y valina), que favorecen la síntesis proteica muscular y la recuperación tras el ejercicio físico.","advertencias":["Este producto no es un medicamento","El consumo de este producto es responsabilidad de quien lo recomienda y de quien lo usa","No exceder la porción recomendada"],"sabor":"Bliss Vainilla","presentaciones":[{"contenido":"500 g","precio":999.0,"moneda":"MXN","codigo":"PT804","pvn":387}],"imagenes":["https://sacmkbioimyzhiyleqdj.supabase.co/storage/v1/object/sign/Imagenes/hf_20260403_004626_82c0b56d-8789-4749-8354-8bc61d924a6c.png?token=eyJraWQiOiJzdG9yYWdlLXVybC1zaWduaW5nLWtleV9jYWFhYzBmMi1jODQ0LTRkNzMtYjYzYy00Zjg3ZmUyODI4MDIiLCJhbGciOiJIUzI1NiJ9.eyJ1cmwiOiJJbWFnZW5lcy9oZl8yMDI2MDQwM18wMDQ2MjZfODJjMGI1NmQtODc4OS00NzQ5LTgzNTQtOGJjNjFkOTI0YTZjLnBuZyIsImlhdCI6MTc3NTE3NzI0NSwiZXhwIjoxODA2NzEzMjQ1fQ.X4i5o6Z5VsQPdlCEeUQcuvpUkcrSGmKCGBiTtk9nnuw"]},{"id":"vybes-therra-protein-polvo-1kg","marca":"ISMERELY","activo":true,"producto":"Therra Protein","linea":"Vybes","categoria":"Suplemento alimenticio","formato":"polvo","uso":"oral","descripcion":"Suplemento alimenticio en polvo a base de albúmina de huevo, proteína aislada de chícharo, proteína aislada de avena y cocoa.","ingredientes":["Albúmina de huevo pasteurizada","Proteína hidrolizada de suero de leche (Pisum sativum)","Proteína aislada de chícharo","Proteína aislada de soya (Glycine max)","Proteína aislada de avena (Avena sativa)","Cocoa","Cloruro de sodio","Schisandra (Schisandra chinensis)","Maca (Lepidium meyenii)","Myo-Inositol","Ashawagandha (Withania somnifera)","D-Chiro inositol","Potasio","Magnesio","Fosforo","Hierro","Zinc","Leucina","Isoleucina","Valina","Lisina","Treonina","Histidina","Triptófano","Metionina","Ácido glutámico","Ácido aspártico","Arginina","L-glutamina","Serina","Prolina","Alanina","Glicina","Tirosina","Cisteína"],"beneficios":["Digestión suave","18 aminoácidos","Asimilación equilibrada","Suplemento cetogénico","La proteína de chícharo tiene un alto contenido de BCAA, lo que la convierte en una excelente opción para la recuperación muscular y la reconstrucción"],"modo_de_uso":"Disolver 30 g en 250 ml de agua o leche una vez por día. No exceder la porción recomendada.","habito_elym":"La combinación de proteínas de origen animal y vegetal (huevo, chícharo, soya y avena) aporta un perfil completo de aminoácidos esenciales, optimizando la síntesis proteica muscular y favoreciendo una digestión suave y asimilación equilibrada.","advertencias":["Este producto no es un medicamento","El consumo de este producto es responsabilidad de quien lo recomienda y de quien lo usa","No exceder la porción recomendada"],"sabores":["Bliss Vainilla","Pride Cacao"],"presentaciones":[{"contenido":"1 kg","sabor":"Bliss Vainilla","precio":1499.0,"moneda":"MXN","codigo":"PT806","pvn":581},{"contenido":"1 kg","sabor":"Pride Cacao","precio":1499.0,"moneda":"MXN","codigo":"PT803","pvn":581}],"imagenes":["https://sacmkbioimyzhiyleqdj.supabase.co/storage/v1/object/sign/Imagenes/hf_20260403_004957_a4c0967c-e387-4aae-8656-5c3a33f6b98f.png?token=eyJraWQiOiJzdG9yYWdlLXVybC1zaWduaW5nLWtleV9jYWFhYzBmMi1jODQ0LTRkNzMtYjYzYy00Zjg3ZmUyODI4MDIiLCJhbGciOiJIUzI1NiJ9.eyJ1cmwiOiJJbWFnZW5lcy9oZl8yMDI2MDQwM18wMDQ5NTdfYTRjMDk2N2MtZTM4Ny00YWFlLTg2NTYtNWMzYTMzZjZiOThmLnBuZyIsImlhdCI6MTc3NTE3NzUxOSwiZXhwIjoxODA2NzEzNTE5fQ.OVZkui6T-VjNEgqjIrqG4Ah59MFJWjESBoq5R6-hQVU"]},{"id":"vybes-trybe-creathy-polvo-250g","marca":"ISMERELY","activo":true,"producto":"Trybe Creathy","linea":"Vybes","categoria":"Suplemento alimenticio","formato":"polvo","uso":"oral","descripcion":"Suplemento alimenticio en polvo a base de creatina monohidratada, melena de león y cordyceps.","ingredientes":["Creatina monohidratada","Melena de león","Cordyceps","Muña peruana","Saborizante Mora azul"],"beneficios":["Cordyceps","Melena de león","Energía","Asimilación rápida","Su mezcla adicionada con adaptógenos mejora el rendimiento en ejercicios de alta intensidad al aumentar fuerza y potencia, promueve el crecimiento muscular y acelerar la recuperación"],"modo_de_uso":"Disolver 6.5 g en 250 ml de agua antes o después de entrenar. No exceder la porción recomendada.","habito_elym":"La creatina monohidratada aumenta la disponibilidad de fosfocreatina en el músculo, potenciando la producción de ATP durante esfuerzos de alta intensidad. Los adaptógenos cordyceps y melena de león complementan este efecto favoreciendo la resistencia y la recuperación.","advertencias":["Este producto no es un medicamento","El consumo de este producto es responsabilidad de quien lo recomienda y de quien lo usa","No exceder la porción recomendada"],"sabor":"Mora azul","presentaciones":[{"contenido":"250 g","formato_envase":"bolsa","precio":799.0,"moneda":"MXN","codigo":"PT814","pvn":309},{"contenido":"250 g","formato_envase":"bote","precio":799.0,"moneda":"MXN","codigo":"PT815","pvn":309}],"imagenes":["https://sacmkbioimyzhiyleqdj.supabase.co/storage/v1/object/sign/Imagenes/hf_20260403_005305_c537b025-f8b8-4f7e-94cf-5bb4dd3bec5b.png?token=eyJraWQiOiJzdG9yYWdlLXVybC1zaWduaW5nLWtleV9jYWFhYzBmMi1jODQ0LTRkNzMtYjYzYy00Zjg3ZmUyODI4MDIiLCJhbGciOiJIUzI1NiJ9.eyJ1cmwiOiJJbWFnZW5lcy9oZl8yMDI2MDQwM18wMDUzMDVfYzUzN2IwMjUtZjhiOC00ZjdlLTk0Y2YtNWJiNGRkM2JlYzViLnBuZyIsImlhdCI6MTc3NTE3NzY4MiwiZXhwIjoxODA2NzEzNjgyfQ.RhlGd2QZ3-4FOOi0FcSiZuwyr1IurW74khewuRtvGRM"]},{"id":"vybes-prana-capsula-30caps","marca":"ISMERELY","activo":true,"producto":"Prana","linea":"Vybes","categoria":"Suplemento alimenticio","formato":"cápsula","uso":"oral","descripcion":"Suplemento alimenticio en cápsula a base de cúrcuma, complejo B y glicinato de Mg.","ingredientes":["Cúrcuma","Calcio","Magnesio","Ácido Hialurónico","Vitamina E","Vitamina B6","Vitamina B9","Vitamina K","Vitamina D3","Vitamina B12","Vitamina B1","Vitamina B2"],"beneficios":["Energía","Magnesio","Fuerza estructural","Asimilación rápida","Apoyo para sentir energía, fuerza y bienestar en cada momento","Tu rutina diaria merece un apoyo integral"],"modo_de_uso":"Tomar 1 cápsula al día. No exceder la porción recomendada.","habito_elym":"El complejo B (B1, B2, B6, B9, B12) participa en el metabolismo energético celular y en la función del sistema nervioso. El glicinato de magnesio es una forma de alta biodisponibilidad que favorece la relajación muscular, el sueño y la salud ósea.","advertencias":["Este producto no es un medicamento","El consumo de este producto es responsabilidad de quien lo recomienda y de quien lo usa","No exceder la porción recomendada"],"sabor":null,"presentaciones":[{"contenido":"30 cápsulas","precio":649.0,"moneda":"MXN","codigo":"PT816","pvn":251}],"imagenes":["https://sacmkbioimyzhiyleqdj.supabase.co/storage/v1/object/sign/Imagenes/hf_20260403_005549_b20f5704-5151-402b-a36a-4d53cf90221d.png?token=eyJraWQiOiJzdG9yYWdlLXVybC1zaWduaW5nLWtleV9jYWFhYzBmMi1jODQ0LTRkNzMtYjYzYy00Zjg3ZmUyODI4MDIiLCJhbGciOiJIUzI1NiJ9.eyJ1cmwiOiJJbWFnZW5lcy9oZl8yMDI2MDQwM18wMDU1NDlfYjIwZjU3MDQtNTE1MS00MDJiLWEzNmEtNGQ1M2NmOTAyMjFkLnBuZyIsImlhdCI6MTc3NTE3NzgzMCwiZXhwIjoxODA2NzEzODMwfQ.t59_4Y34cBx8QV7R1LLPkbVUOWbc5gpQKA7Y5Mbjc9g"]}];
+
+let entradas=[],ventas=[],filtro='Todas',chartBar=null,chartDonut=null,aiHist=[],aiInited=false;
+
+function loadData(){
+  try{entradas=JSON.parse(localStorage.getItem('goliath_entradas')||'[]');}catch(e){entradas=[];}
+  try{ventas=JSON.parse(localStorage.getItem('goliath_ventas')||'[]');}catch(e){ventas=[];}
+}
+function save(){
+  localStorage.setItem('goliath_entradas',JSON.stringify(entradas));
+  localStorage.setItem('goliath_ventas',JSON.stringify(ventas));
+}
+function uid(){try{return crypto.randomUUID();}catch(e){return Date.now().toString(36)+Math.random().toString(36).slice(2);}}
+function fmt(n){return '$'+Math.round(n).toLocaleString('es-MX')+' MXN';}
+function fmtD(s){if(!s)return'—';const d=new Date(s+'T12:00:00');return d.toLocaleDateString('es-MX',{day:'2-digit',month:'2-digit',year:'numeric'});}
+function today(){return new Date().toISOString().split('T')[0];}
+
+function stock(pid){
+  const e=entradas.filter(x=>x.pid===pid).reduce((s,x)=>s+x.uds,0);
+  const v=ventas.filter(x=>x.pid===pid).reduce((s,x)=>s+x.uds,0);
+  return Math.max(0,e-v);
+}
+function invertido(pid){
+  const mis=entradas.filter(x=>x.pid===pid);
+  const tu=mis.reduce((s,x)=>s+x.uds,0);
+  const tc=mis.reduce((s,x)=>s+x.uds*x.costo,0);
+  return (tu>0?tc/tu:0)*stock(pid);
+}
+function diasStock(pid){
+  const mis=entradas.filter(x=>x.pid===pid).sort((a,b)=>new Date(a.fecha)-new Date(b.fecha));
+  if(!mis.length)return 0;
+  return Math.floor((Date.now()-new Date(mis[0].fecha))/86400000);
+}
+function lClass(linea){
+  if(!linea)return 'l-ftelym';
+  const l=linea.toLowerCase();
+  if(l.includes('ft-elym')||l.includes('ftelym'))return 'l-ftelym';
+  if(l.includes('vybes'))return 'l-vybes';
+  if(l.includes('bienestar'))return 'l-bienestar';
+  if(l.includes('avancely'))return 'l-avancely';
+  return 'l-ftelym';
+}
+
+function goTab(t){
+  document.querySelectorAll('.tab').forEach((el,i)=>{
+    el.classList.toggle('on',['inv','ventas','dash','ai','disponibles'][i]===t);
+  });
+  document.querySelectorAll('.page').forEach(el=>el.classList.remove('on'));
+  document.getElementById('tab-'+t).classList.add('on');
+  if(t==='ventas')renderVentas();
+  if(t==='dash')renderDash();
+  if(t==='ai')initAI();
+  if(t==='disponibles')renderDisponibles();
+}
+
+function setFiltro(l,btn){
+  filtro=l;
+  document.querySelectorAll('.fb').forEach(b=>b.classList.remove('on'));
+  btn.classList.add('on');
+  renderInv();
+}
+
+function renderInv(){
+  const q=(document.getElementById('srch-inv').value||'').toLowerCase();
+  let prods=CATALOGO.filter(p=>p.activo!==false);
+  if(filtro!=='Todas')prods=prods.filter(p=>p.linea===filtro);
+  if(q)prods=prods.filter(p=>(p.producto||'').toLowerCase().includes(q)||(p.linea||'').toLowerCase().includes(q));
+  prods.sort((a,b)=>{const sa=stock(a.id),sb=stock(b.id);if(sa>0&&sb===0)return -1;if(sa===0&&sb>0)return 1;return(a.producto||'').localeCompare(b.producto||'');});
+  document.getElementById('prod-grid').innerHTML=prods.map(p=>{
+    const s=stock(p.id),inv=invertido(p.id),dias=diasStock(p.id);
+    const precio=p.presentaciones&&p.presentaciones[0]?p.presentaciones[0].precio:0;
+    const img=(p.imagenes&&p.imagenes[0])?p.imagenes[0]:(p.imagen||'');
+    const dc=dias===0?'ok':dias>60?'danger':dias>30?'warn':'ok';
+    const sabor=p.sabor?` <span style="font-weight:400;color:var(--sub);font-size:11px">&#183; ${p.sabor}</span>`:'';
+    return `<div class="prod-card${s===0?' no-stock':''}">
+      ${img?`<img class="prod-img" src="${img}" alt="${p.producto}" loading="lazy" onerror="this.style.display='none';this.nextSibling.style.display='flex'"><div class="prod-img-ph" style="display:none">&#128138;</div>`:`<div class="prod-img-ph">&#128138;</div>`}
+      <div class="prod-body">
+        <div class="prod-linea ${lClass(p.linea)}">${p.linea||''}</div>
+        <div class="prod-name">${p.producto||''}${sabor}</div>
+        <div class="prod-precio">Cat&#225;logo: <strong>${fmt(precio)}</strong></div>
+        <div class="badges">
+          <span class="badge b-stock${s===0?' empty':''}">&#128230; ${s} uds</span>
+          ${inv>0?`<span class="badge b-inv">&#128176; ${fmt(inv)}</span>`:''}
+          ${s>0?`<span class="badge b-dias ${dc}">&#128197; ${dias}d</span>`:''}
+        </div>
+        <div class="prod-btns">
+          <button class="btn-ent" onclick="abrirEntrada('${p.id}')">+ Entrada</button>
+          <button class="btn-ven" onclick="abrirVenta('${p.id}')">&#10003; Venta</button>
+        </div>
+      </div>
+    </div>`;
+  }).join('');
+}
+
+function abrirEntrada(pid){
+  const sel=document.getElementById('e-prod');
+  sel.innerHTML=CATALOGO.filter(p=>p.activo!==false).sort((a,b)=>(a.producto||'').localeCompare(b.producto||'')).map(p=>`<option value="${p.id}">${p.producto||p.id}${p.sabor?' ('+p.sabor+')':''} — ${p.linea||''}</option>`).join('');
+  if(pid)sel.value=pid;
+  onEProd();
+  document.getElementById('e-fecha').value=today();
+  document.getElementById('e-uds').value=1;
+  document.getElementById('e-notas').value='';
+  document.getElementById('m-entrada').classList.add('open');
+}
+function onEProd(){
+  const p=CATALOGO.find(x=>x.id===document.getElementById('e-prod').value);
+  if(p&&p.presentaciones&&p.presentaciones[0])document.getElementById('e-costo').value=Math.round(p.presentaciones[0].precio*0.5);
+}
+function guardarEntrada(){
+  const pid=document.getElementById('e-prod').value;
+  const uds=parseInt(document.getElementById('e-uds').value)||0;
+  const costo=parseFloat(document.getElementById('e-costo').value)||0;
+  const fecha=document.getElementById('e-fecha').value;
+  if(!pid||uds<=0){toast('Completa los campos obligatorios');return;}
+  const p=CATALOGO.find(x=>x.id===pid);
+  entradas.push({id:uid(),pid,nombre:p?p.producto:pid,linea:p?p.linea:'',uds,costo,fecha:fecha||today(),notas:document.getElementById('e-notas').value});
+  save();closeModals();renderInv();
+  toast('Entrada registrada: '+uds+' uds de '+(p?p.producto:pid));
+}
+
+function abrirVenta(pid){
+  const sel=document.getElementById('v-prod');
+  sel.innerHTML=CATALOGO.filter(p=>p.activo!==false).sort((a,b)=>(a.producto||'').localeCompare(b.producto||'')).map(p=>`<option value="${p.id}">${p.producto||p.id}${p.sabor?' ('+p.sabor+')':''} — ${p.linea||''} (${stock(p.id)} uds)</option>`).join('');
+  if(pid)sel.value=pid;
+  onVProd();
+  document.getElementById('v-fecha').value=today();
+  document.getElementById('v-uds').value=1;
+  document.getElementById('v-cliente').value='';
+  document.getElementById('v-tel').value='';
+  document.getElementById('m-venta').classList.add('open');
+}
+function onVProd(){
+  const p=CATALOGO.find(x=>x.id===document.getElementById('v-prod').value);
+  if(p&&p.presentaciones&&p.presentaciones[0])document.getElementById('v-precio').value=p.presentaciones[0].precio;
+}
+function guardarVenta(){
+  const pid=document.getElementById('v-prod').value;
+  const uds=parseInt(document.getElementById('v-uds').value)||0;
+  const precio=parseFloat(document.getElementById('v-precio').value)||0;
+  const cliente=document.getElementById('v-cliente').value.trim();
+  const tel=document.getElementById('v-tel').value.trim();
+  const fecha=document.getElementById('v-fecha').value;
+  if(!pid||uds<=0||!cliente){toast('Completa producto, unidades y nombre del cliente');return;}
+  const s=stock(pid);
+  if(uds>s){toast('Stock insuficiente. Disponible: '+s+' uds');return;}
+  const p=CATALOGO.find(x=>x.id===pid);
+  const mis=entradas.filter(x=>x.pid===pid);
+  const tu=mis.reduce((s,x)=>s+x.uds,0);
+  const tc=mis.reduce((s,x)=>s+x.uds*x.costo,0);
+  const cAvg=tu>0?tc/tu:0;
+  ventas.push({id:uid(),pid,nombre:p?p.producto:pid,linea:p?p.linea:'',cliente,telefono:tel,uds,precioUnit:precio,costoUnit:cAvg,fecha:fecha||today()});
+  save();closeModals();renderInv();
+  toast('Venta registrada: '+uds+' uds a '+cliente);
+}
+
+function renderVentas(){
+  const q=(document.getElementById('srch-ventas').value||'').toLowerCase();
+  let filt=ventas.filter(v=>!q||v.nombre.toLowerCase().includes(q)||(v.cliente||'').toLowerCase().includes(q));
+  filt.sort((a,b)=>new Date(b.fecha)-new Date(a.fecha));
+  const tv=ventas.reduce((s,v)=>s+v.uds*v.precioUnit,0);
+  const tc=ventas.reduce((s,v)=>s+v.uds*(v.costoUnit||0),0);
+  const gan=tv-tc;
+  document.getElementById('ventas-sum').innerHTML=`
+    <div class="sum-card"><div class="lbl">Total Vendido</div><div class="val orange">${fmt(tv)}</div></div>
+    <div class="sum-card"><div class="lbl">Costo Total</div><div class="val">${fmt(tc)}</div></div>
+    <div class="sum-card"><div class="lbl">Ganancia Bruta</div><div class="val green">${fmt(gan)}</div></div>`;
+  if(!filt.length){
+    document.getElementById('ventas-tbl').innerHTML=`<div class="empty-st"><span class="ico">&#128176;</span><p>${!ventas.length?'Sin ventas registradas. Registra tu primera venta desde el Inventario.':'Sin resultados.'}</p></div>`;
+    return;
+  }
+  document.getElementById('ventas-tbl').innerHTML=`<table><thead><tr><th>Fecha</th><th>Producto</th><th>L&#237;nea</th><th>Cliente</th><th>Tel</th><th>Uds</th><th>Precio</th><th>Total</th><th>Ganancia</th><th></th></tr></thead><tbody>${
+    filt.map(v=>{
+      const tot=v.uds*v.precioUnit,g=tot-v.uds*(v.costoUnit||0);
+      return `<tr><td>${fmtD(v.fecha)}</td><td style="font-weight:700;color:#fff">${v.nombre}</td><td><span class="prod-linea ${lClass(v.linea)}" style="font-size:10px">${v.linea||''}</span></td><td>${v.cliente}</td><td>${v.telefono||'—'}</td><td>${v.uds}</td><td>${fmt(v.precioUnit)}</td><td style="font-weight:700;color:#ffb74d">${fmt(tot)}</td><td style="color:#66bb6a">${fmt(g)}</td><td><button class="td-del" onclick="delVenta('${v.id}')" title="Eliminar">&#128465;</button></td></tr>`;
+    }).join('')
+  }</tbody></table>`;
+}
+function delVenta(id){
+  if(!confirm('&#191;Eliminar esta venta?'))return;
+  ventas=ventas.filter(v=>v.id!==id);save();renderVentas();toast('Venta eliminada');
+}
+
+function renderDash(){
+  const now=Date.now();
+  const totalInv=CATALOGO.reduce((s,p)=>s+invertido(p.id),0);
+  const totalStk=CATALOGO.reduce((s,p)=>s+stock(p.id),0);
+  const tv=ventas.reduce((s,v)=>s+v.uds*v.precioUnit,0);
+  const tc=ventas.reduce((s,v)=>s+v.uds*(v.costoUnit||0),0);
+  document.getElementById('dash-cards').innerHTML=`
+    <div class="dash-card"><div class="lbl">Invertido en Stock</div><div class="val">${fmt(totalInv)}</div><div class="sub">Valor del inventario actual</div></div>
+    <div class="dash-card"><div class="lbl">Total Vendido</div><div class="val" style="color:#ffb74d">${fmt(tv)}</div><div class="sub">${ventas.length} ventas</div></div>
+    <div class="dash-card"><div class="lbl">Ganancia Bruta</div><div class="val" style="color:#66bb6a">${fmt(tv-tc)}</div><div class="sub">Venta &#8722; Costo</div></div>
+    <div class="dash-card"><div class="lbl">Unidades en Stock</div><div class="val">${totalStk}</div><div class="sub">${CATALOGO.filter(p=>stock(p.id)>0).length} productos</div></div>`;
+
+  // Bar chart
+  const vpp={};ventas.forEach(v=>{vpp[v.nombre]=(vpp[v.nombre]||0)+v.uds;});
+  const top=Object.entries(vpp).sort((a,b)=>b[1]-a[1]).slice(0,8);
+  if(chartBar)chartBar.destroy();
+  Chart.defaults.color='#666';
+  chartBar=new Chart(document.getElementById('chart-bar').getContext('2d'),{
+    type:'bar',
+    data:{labels:top.map(x=>x[0].length>16?x[0].slice(0,16)+'…':x[0]),datasets:[{label:'Uds vendidas',data:top.map(x=>x[1]),backgroundColor:'#e65100',borderRadius:6}]},
+    options:{responsive:true,plugins:{legend:{display:false}},scales:{x:{grid:{color:'rgba(255,255,255,.05)'},ticks:{color:'#666',font:{size:11}}},y:{grid:{color:'rgba(255,255,255,.05)'},ticks:{color:'#666'},beginAtZero:true}}}
+  });
+
+  // Donut chart
+  const vpl={};ventas.forEach(v=>{vpl[v.linea||'Otros']=(vpl[v.linea||'Otros']||0)+v.uds*v.precioUnit;});
+  const lColors={'Ft-Elym':'#42a5f5','Vybes':'#ab47bc','Bienestar Line':'#66bb6a','Avancely Line':'#ffa726'};
+  const lKeys=Object.keys(vpl);
+  if(chartDonut)chartDonut.destroy();
+  chartDonut=new Chart(document.getElementById('chart-donut').getContext('2d'),{
+    type:'doughnut',
+    data:{labels:lKeys.length?lKeys:['Sin datos'],datasets:[{data:lKeys.length?lKeys.map(k=>Math.round(vpl[k])):[1],backgroundColor:lKeys.length?lKeys.map(k=>lColors[k]||'#e65100'):['#333'],borderWidth:0,hoverOffset:8}]},
+    options:{responsive:true,plugins:{legend:{position:'bottom',labels:{color:'#777',padding:14,font:{size:11}}}},cutout:'65%'}
+  });
+
+  // Estancados
+  const est=CATALOGO.filter(p=>{
+    const s=stock(p.id);if(!s)return false;
+    const uv=ventas.filter(v=>v.pid===p.id).sort((a,b)=>new Date(b.fecha)-new Date(a.fecha))[0];
+    const dias=uv?Math.floor((now-new Date(uv.fecha))/86400000):diasStock(p.id);
+    return dias>=30;
+  });
+  document.getElementById('stancados-n').textContent=est.length;
+  document.getElementById('stancados-tbl').innerHTML=!est.length
+    ?`<div class="empty-st"><span class="ico">&#127881;</span><p>Sin productos estancados. Todo se est&#225; vendiendo bien.</p></div>`
+    :`<table><thead><tr><th>Producto</th><th>L&#237;nea</th><th>Stock</th><th>D&#237;as sin vender</th><th>Invertido</th><th></th></tr></thead><tbody>${
+      est.map(p=>{
+        const uv=ventas.filter(v=>v.pid===p.id).sort((a,b)=>new Date(b.fecha)-new Date(a.fecha))[0];
+        const dias=uv?Math.floor((now-new Date(uv.fecha))/86400000):diasStock(p.id);
+        return `<tr><td style="font-weight:700;color:#fff">${p.producto||''}${p.sabor?' ('+p.sabor+')':''}</td><td><span class="prod-linea ${lClass(p.linea)}" style="font-size:10px">${p.linea||''}</span></td><td>${stock(p.id)} uds</td><td style="color:${dias>60?'#ef9a9a':'#ffca28'}">${dias} d&#237;as</td><td>${fmt(invertido(p.id))}</td><td><button class="btn-analizar" onclick="analizarProducto('${p.id}')">&#129504; Analizar</button></td></tr>`;
+      }).join('')
+    }</tbody></table>`;
+}
+
+// AI AGENT
+const SYS=`Eres Carlos Mendez, experto con 20 anos de experiencia vendiendo suplementos naturales en Mexico y Latinoamerica. Conoces ISMERELY a fondo: sus lineas Ft-Elym, Vybes, Bienestar Line y Avancely Line. Conoces los ingredientes, beneficios y padecimientos de cada producto. Tu trabajo es analizar el inventario del distribuidor y dar estrategias CONCRETAS y ACCIONABLES.
+
+Cuando analices un producto estancado, da EXACTAMENTE 3 estrategias bien desarrolladas:
+
+ESTRATEGIA 1 - Video Corto (Reels/TikTok):
+[Guion completo de 30-60 segundos con hook potente, desarrollo y CTA especifico]
+
+ESTRATEGIA 2 - Anuncio Pagado (Meta Ads):
+[Copy completo del anuncio, publico objetivo especifico, presupuesto sugerido, formato]
+
+ESTRATEGIA 3 - Contenido Organico + Marca Personal:
+[Tipo de contenido, frecuencia, angulo de historia personal, como conectar con la audiencia ideal]
+
+Usa lenguaje directo y sin rodeos. Piensa como vendedor experimentado, no como coach motivacional. Da numeros, ejemplos especificos y pasos de accion claros.`;
+
+function ctxInv(){
+  const now=Date.now();
+  const est=CATALOGO.filter(p=>{
+    const s=stock(p.id);if(!s)return false;
+    const uv=ventas.filter(v=>v.pid===p.id).sort((a,b)=>new Date(b.fecha)-new Date(a.fecha))[0];
+    const dias=uv?Math.floor((now-new Date(uv.fecha))/86400000):diasStock(p.id);
+    return dias>=30;
+  });
+  const tv=ventas.reduce((s,v)=>s+v.uds*v.precioUnit,0);
+  const tc=ventas.reduce((s,v)=>s+v.uds*(v.costoUnit||0),0);
+  const totalInv=CATALOGO.reduce((s,p)=>s+invertido(p.id),0);
+  let ctx=`=== INVENTARIO DEL DISTRIBUIDOR ===\nTotal invertido en stock: ${fmt(totalInv)}\nTotal vendido: ${fmt(tv)}\nGanancia bruta: ${fmt(tv-tc)}\nVentas registradas: ${ventas.length}\n\n`;
+  const conStock=CATALOGO.filter(p=>stock(p.id)>0);
+  if(conStock.length){
+    ctx+='PRODUCTOS EN STOCK:\n';
+    conStock.forEach(p=>{
+      const ings=(p.ingredientes||[]).slice(0,4).join(', ');
+      ctx+=`- ${p.producto||''}${p.sabor?' ('+p.sabor+')':''} [${p.linea}]: ${stock(p.id)} uds, ${fmt(invertido(p.id))} invertidos, ${diasStock(p.id)} dias en stock. Ingredientes: ${ings}\n`;
+    });
+  }
+  if(est.length){
+    ctx+='\nPRODUCTOS ESTANCADOS (30+ dias sin vender):\n';
+    est.forEach(p=>{
+      const uv=ventas.filter(v=>v.pid===p.id).sort((a,b)=>new Date(b.fecha)-new Date(a.fecha))[0];
+      const dias=uv?Math.floor((now-new Date(uv.fecha))/86400000):diasStock(p.id);
+      ctx+=`- ${p.producto||''}${p.sabor?' ('+p.sabor+')':''}: ${stock(p.id)} uds, ${dias} dias sin vender, ${fmt(invertido(p.id))} invertidos\n`;
+    });
+  }
+  return ctx;
+}
+
+function initAI(){
+  if(aiInited)return;
+  aiInited=true;
+  aiMsg('bot','Hola! Soy Carlos Mendez. Con 20 anos vendiendo suplementos, he visto de todo.\n\nPuedo analizar tu inventario, detectar productos que necesitan empuje y darte estrategias concretas de video, anuncios y contenido para moverlos.\n\nHaz clic en "Analizar Inventario" para un diagnostico completo, o preguntame sobre cualquier producto.',false);
+}
+
+function aiMsg(rol,txt,conTrueno){
+  const msgs=document.getElementById('ai-msgs');
+  const d=document.createElement('div');
+  d.className='ai-m '+rol;d.textContent=txt;
+  msgs.appendChild(d);
+  if(conTrueno&&rol==='bot'){
+    const b=document.createElement('button');
+    b.className='btn-trueno';b.innerHTML='&#9889; Llevar a Trueno 4.0';
+    b.onclick=()=>{
+      localStorage.setItem('goliath_trueno_inject',JSON.stringify({estrategias:txt,mensaje_inicial:'Tengo productos estancados. El experto me dio estas estrategias:\n\n'+txt.slice(0,600)+'\n\nBasandote en esto, como puedo usar mi marca personal para mover estos productos? Dame un plan de contenido para esta semana.'}));
+      window.open('cotizador-ismerely.html','_blank');
+      toast('Abriendo Trueno 4.0 con el contexto...');
+    };
+    msgs.appendChild(b);
+  }
+  setTimeout(()=>msgs.scrollTop=msgs.scrollHeight,50);
+}
+
+async function callGemini(msgs){
+  const url=`https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${GEMINI_KEY}`;
+  const contents=msgs.map(m=>({role:m.role==='assistant'?'model':'user',parts:[{text:m.content}]}));
+  const r=await fetch(url,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({contents,generationConfig:{temperature:0.9,maxOutputTokens:2048}})});
+  if(!r.ok)throw new Error('Gemini '+r.status);
+  const d=await r.json();
+  if(!d.candidates||!d.candidates[0])throw new Error('No candidates');
+  return d.candidates[0].content.parts[0].text;
+}
+async function callOpenAI(msgs){
+  const r=await fetch('/api/openai',{method:'POST',headers:{'Content-Type':'application/json','Authorization':'Bearer '+OPENAI_KEY},body:JSON.stringify({model:'gpt-4o-mini',messages:[{role:'system',content:SYS},...msgs],temperature:0.9,max_tokens:2048})});
+  if(!r.ok)throw new Error('OpenAI '+r.status);
+  const d=await r.json();return d.choices[0].message.content;
+}
+async function callAI(msgs){
+  try{return await callGemini(msgs);}catch(e){console.warn('Gemini fail:',e.message);return await callOpenAI(msgs);}
+}
+
+async function aiSend(){
+  const inp=document.getElementById('ai-inp');
+  const txt=inp.value.trim();if(!txt)return;
+  inp.value='';
+  aiMsg('user',txt,false);
+  aiHist.push({role:'user',content:txt});
+  const typing=document.createElement('div');
+  typing.className='ai-m bot typing';typing.textContent='Carlos esta analizando...';
+  document.getElementById('ai-msgs').appendChild(typing);
+  try{
+    const msgs=aiHist.length===1?[{role:'user',content:ctxInv()+'\n\n'+aiHist[0].content}]:[...aiHist];
+    const resp=await callAI(msgs);
+    typing.remove();
+    aiHist.push({role:'assistant',content:resp});
+    const hasEst=resp.includes('ESTRATEGIA')||resp.includes('estrategia')||resp.includes('VIDEO')||resp.includes('video');
+    aiMsg('bot',resp,hasEst);
+  }catch(e){typing.remove();aiMsg('bot','Error: '+e.message+'. Verifica tu conexion.',false);}
+}
+
+async function analizarInventario(){
+  goTab('ai');
+  const msg=ctxInv()+'\n\nAnaliza mi inventario completo. Identifica los productos mas urgentes de mover y para el mas critico dame las 3 estrategias completas.';
+  aiHist=[];document.getElementById('ai-msgs').innerHTML='';
+  aiMsg('user','Analizando inventario completo...',false);
+  aiHist.push({role:'user',content:msg});
+  const typing=document.createElement('div');
+  typing.className='ai-m bot typing';typing.textContent='Carlos esta analizando tu inventario...';
+  document.getElementById('ai-msgs').appendChild(typing);
+  try{
+    const resp=await callAI(aiHist);
+    typing.remove();aiHist.push({role:'assistant',content:resp});aiMsg('bot',resp,true);
+  }catch(e){typing.remove();aiMsg('bot','Error: '+e.message,false);}
+}
+
+function analizarProducto(pid){
+  const p=CATALOGO.find(x=>x.id===pid);if(!p)return;
+  const s=stock(pid),inv=invertido(pid),dias=diasStock(pid);
+  const ings=(p.ingredientes||[]).join(', ');
+  const bens=(p.beneficios||[]).join(', ');
+  const msg=`Necesito estrategias urgentes para este producto estancado:\n\nProducto: ${p.producto||''}${p.sabor?' ('+p.sabor+')':''}\nLinea: ${p.linea||''}\nDescripcion: ${p.descripcion||''}\nStock: ${s} unidades\nInvertido: ${fmt(inv)}\nDias sin vender: ${dias}\nIngredientes: ${ings}\nBeneficios: ${bens}\n\nDame las 3 estrategias completas para venderlo urgentemente.`;
+  goTab('ai');aiHist=[];document.getElementById('ai-msgs').innerHTML='';
+  aiMsg('user',msg,false);aiHist.push({role:'user',content:msg});
+  const typing=document.createElement('div');
+  typing.className='ai-m bot typing';typing.textContent='Carlos preparando estrategias...';
+  document.getElementById('ai-msgs').appendChild(typing);
+  callAI(aiHist).then(resp=>{
+    typing.remove();aiHist.push({role:'assistant',content:resp});aiMsg('bot',resp,true);
+  }).catch(e=>{typing.remove();aiMsg('bot','Error: '+e.message,false);});
+}
+
+function exportarDatos(){
+  const b=new Blob([JSON.stringify({entradas,ventas,exportado:new Date().toISOString()},null,2)],{type:'application/json'});
+  const a=document.createElement('a');a.href=URL.createObjectURL(b);
+  a.download='goliath_inventario_'+today()+'.json';a.click();toast('Datos exportados');
+}
+function importarDatos(e){
+  const file=e.target.files[0];if(!file)return;
+  const r=new FileReader();
+  r.onload=ev=>{
+    try{
+      const d=JSON.parse(ev.target.result);
+      if(!confirm('Importar datos? Esto reemplazara tu inventario y ventas actuales.'))return;
+      if(d.entradas)entradas=d.entradas;
+      if(d.ventas)ventas=d.ventas;
+      save();renderInv();toast('Datos importados correctamente');
+    }catch(err){toast('Error al importar: formato incorrecto');}
+  };
+  r.readAsText(file);e.target.value='';
+}
+
+function closeModals(){document.querySelectorAll('.modal-ov').forEach(m=>m.classList.remove('open'));}
+document.addEventListener('click',e=>{if(e.target.classList.contains('modal-ov'))closeModals();});
+document.addEventListener('keydown',e=>{if(e.key==='Escape')closeModals();});
+
+function toast(msg){
+  const t=document.getElementById('toast-el');
+  t.textContent=msg;t.classList.add('show');
+  setTimeout(()=>t.classList.remove('show'),3000);
+}
+
+loadData();
+renderInv();
+
+// ── DISPONIBLES ────────────────────────────────────────────────
+function renderDisponibles(){
+  const soloStock = document.getElementById('disp-solo-stock')?.checked ?? true;
+  let prods = CATALOGO.filter(p => p.activo !== false);
+  if(soloStock) prods = prods.filter(p => stock(p.id) > 0);
+  prods.sort((a,b)=>(a.linea||'').localeCompare(b.linea||'')||(a.producto||'').localeCompare(b.producto||''));
+  const total = prods.reduce((s,p)=>s+invertido(p.id),0);
+  const totalPVN = prods.reduce((s,p)=>{
+    const pvn=p.presentaciones&&p.presentaciones[0]?(p.presentaciones[0].pvn||0):0;
+    return s+pvn*stock(p.id);
+  },0);
+  const fecha=new Date().toLocaleDateString('es-MX',{day:'2-digit',month:'long',year:'numeric'});
+  const el=document.getElementById('disp-fecha-print');
+  if(el) el.textContent='Fecha: '+fecha;
+  if(!prods.length){
+    document.getElementById('disp-wrap').innerHTML='<div class="empty-st"><span class="ico">&#128230;</span><p>Sin productos disponibles</p></div>';
+    return;
+  }
+  const rows=prods.map(p=>{
+    const s=stock(p.id);
+    const pres=p.presentaciones&&p.presentaciones[0]?p.presentaciones[0]:{};
+    const precio=pres.precio||0,pvn=pres.pvn||0;
+    const precioSocio=pres.precio_socio||Math.round(precio*0.5);
+    const codigo=pres.codigo||p.codigo_base||p.id;
+    const inv=invertido(p.id);
+    const cls=s>0?'dst-ok':'dst-empty';
+    const sabor=p.sabor?` <span style="color:var(--sub);font-size:11px">· ${p.sabor}</span>`:'';
+    return `<tr>
+      <td>${p.linea||'—'}</td>
+      <td><strong>${p.producto||''}</strong>${sabor}</td>
+      <td style="font-family:monospace;font-size:11px">${codigo}</td>
+      <td><span class="disp-stock-tag ${cls}">${s} uds</span></td>
+      <td>$${Math.round(precio).toLocaleString('es-MX')}</td>
+      <td>$${Math.round(precioSocio).toLocaleString('es-MX')}</td>
+      <td>${pvn>0?pvn:'—'}</td>
+      <td style="color:var(--sub)">${inv>0?'$'+Math.round(inv).toLocaleString('es-MX'):'—'}</td>
+    </tr>`;
+  }).join('');
+  document.getElementById('disp-wrap').innerHTML=`
+    <table class="disp-tbl">
+      <thead><tr>
+        <th>Línea</th><th>Producto</th><th>Código</th>
+        <th>Stock</th><th>Catálogo</th><th>P. Socio</th>
+        <th>PVN</th><th>Invertido</th>
+      </tr></thead>
+      <tbody>${rows}</tbody>
+      <tfoot><tr style="border-top:2px solid var(--border)">
+        <td colspan="7" style="font-weight:700;color:#fff;padding:12px 14px">
+          ${prods.length} productos · ${totalPVN.toLocaleString('es-MX')} PVN total
+        </td>
+        <td style="font-weight:700;color:#ffb74d;padding:12px 14px">
+          $${Math.round(total).toLocaleString('es-MX')}
+        </td>
+      </tr></tfoot>
+    </table>`;
+}
+
+function imprimirInventario(){
+  renderDisponibles();
+  setTimeout(()=>window.print(),100);
+}
+
+function enviarInventarioWA(){
+  const soloStock=document.getElementById('disp-solo-stock')?.checked??true;
+  let prods=CATALOGO.filter(p=>p.activo!==false);
+  if(soloStock) prods=prods.filter(p=>stock(p.id)>0);
+  if(!prods.length){toast('⚠️ No hay productos disponibles');return;}
+  prods.sort((a,b)=>(a.linea||'').localeCompare(b.linea||'')||(a.producto||'').localeCompare(b.producto||''));
+  const fecha=new Date().toLocaleDateString('es-MX');
+  const waLines=['*📦 INVENTARIO DISPONIBLE ISMERELY*','📅 '+fecha,''];
+  let lineaActual='';
+  prods.forEach(p=>{
+    if((p.linea||'')!==lineaActual){lineaActual=p.linea||'';waLines.push('*'+lineaActual+'*');}
+    const s=stock(p.id);
+    const pres=p.presentaciones&&p.presentaciones[0]?p.presentaciones[0]:{};
+    const precio=pres.precio||0,pvn=pres.pvn||0;
+    waLines.push(`  • ${p.producto||''}${p.sabor?' · '+p.sabor:''} — ${s} uds — $${Math.round(precio).toLocaleString('es-MX')} MXN${pvn?' ('+pvn+' PVN)':''}`);
+  });
+  const tPVN=prods.reduce((s,p)=>s+((p.presentaciones&&p.presentaciones[0]?(p.presentaciones[0].pvn||0):0)*stock(p.id)),0);
+  const tInv=prods.reduce((s,p)=>s+invertido(p.id),0);
+  waLines.push('');
+  waLines.push('─'.repeat(28));
+  waLines.push('*'+prods.length+' productos disponibles*');
+  if(tPVN) waLines.push('⚡ PVN total: '+tPVN.toLocaleString('es-MX'));
+  if(tInv) waLines.push('💰 Invertido: $'+Math.round(tInv).toLocaleString('es-MX')+' MXN');
+  window.open('https://wa.me/?text='+encodeURIComponent(waLines.join('\n')),'_blank');
+}
+
+</script>
+</body>
+</html>

@@ -1,0 +1,254 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Estrategia de Contenido – Trueno 4.0</title>
+<style>
+:root{
+  --bg:#060606;--bg2:#0e0e0e;--bg3:#141414;--bg4:#1c1c1c;
+  --silver:#c8c8c8;--silver-dim:#888;--silver-faint:#555;
+  --border:#1e1e1e;--border2:#2e2e2e;--border3:#333;
+  --text:#d0d0d0;--text2:#888;--text3:#555;
+  --green:#6dc87a;--gold:#c8a850;--purple:#9b7fe8;--blue:#7aaee0;--red:#c87a7a;
+}
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:'Segoe UI',Arial,sans-serif;background:var(--bg);color:var(--text);font-size:13px;min-height:100vh}
+
+/* HEADER */
+header{background:linear-gradient(135deg,#050505,#111,#050505);border-bottom:1px solid var(--border2);padding:12px 20px;display:flex;align-items:center;gap:12px}
+.logo-box{background:#1c1c1c;color:#888;border:1px solid #333;padding:6px 12px;border-radius:7px;font-weight:900;font-size:13px;letter-spacing:2px;line-height:1.3;text-align:center;text-decoration:none}
+.logo-sub{font-size:8px;letter-spacing:3px;opacity:.7;font-weight:400;display:block}
+.hdr-title{flex:1}
+.hdr-title h1{font-size:15px;font-weight:800;color:var(--silver)}
+.hdr-title p{font-size:10px;color:var(--text3);margin-top:1px}
+.btn-back{background:linear-gradient(135deg,#1c1c1c,#2e2e2e);color:#bbb;border:1px solid #333;padding:7px 13px;border-radius:8px;font-size:11px;font-weight:700;cursor:pointer;text-decoration:none;display:flex;align-items:center;gap:5px}
+.btn-back:hover{background:linear-gradient(135deg,#252525,#383838);border-color:#555;color:#ddd}
+.btn-export{background:linear-gradient(135deg,#0d1a0d,#1a3a1a);border:1px solid rgba(109,200,122,.3);color:var(--green);padding:7px 13px;border-radius:8px;font-size:11px;font-weight:700;cursor:pointer;display:flex;align-items:center;gap:5px}
+.btn-export:hover{border-color:rgba(109,200,122,.6);box-shadow:0 0 10px rgba(109,200,122,.15)}
+
+/* MAIN */
+main{padding:24px 20px;max-width:1100px;margin:0 auto}
+
+/* OVERVIEW BAR */
+.overview{display:flex;gap:10px;margin-bottom:24px;flex-wrap:wrap}
+.ov-pill{flex:1;min-width:100px;background:var(--bg2);border:1px solid var(--border2);border-radius:10px;padding:10px 14px;text-align:center}
+.ov-pill-num{font-size:22px;font-weight:900;color:var(--silver)}
+.ov-pill-label{font-size:9px;color:var(--text3);text-transform:uppercase;letter-spacing:1px;margin-top:2px}
+
+/* GRID */
+.dias-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(280px,1fr));gap:14px}
+
+/* DAY CARD */
+.dia-card{background:var(--bg2);border:1px solid var(--border2);border-radius:12px;overflow:hidden;transition:border-color .2s}
+.dia-card:hover{border-color:var(--border3)}
+.dia-card-hdr{padding:10px 14px;display:flex;align-items:center;gap:10px;border-bottom:1px solid var(--border)}
+.dia-num{width:32px;height:32px;border-radius:8px;display:flex;align-items:center;justify-content:center;font-size:13px;font-weight:900;flex-shrink:0}
+.dia-info{flex:1;overflow:hidden}
+.dia-titulo{font-size:11px;font-weight:700;color:var(--silver);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.dia-subtitulo{font-size:9px;color:var(--text3);margin-top:1px}
+.dia-formato-badge{font-size:9px;padding:3px 8px;border-radius:10px;font-weight:700;white-space:nowrap;flex-shrink:0}
+
+.dia-card-body{padding:12px 14px;display:flex;flex-direction:column;gap:8px}
+.dia-row{display:flex;gap:6px;align-items:flex-start}
+.dia-row-icon{font-size:12px;flex-shrink:0;margin-top:1px}
+.dia-row-content{}
+.dia-row-label{font-size:9px;color:var(--text3);text-transform:uppercase;letter-spacing:.5px;margin-bottom:1px}
+.dia-row-value{font-size:11px;color:var(--text2);line-height:1.5}
+.dia-titular{font-size:12px;color:var(--text);font-weight:600;line-height:1.5;border-left:2px solid;padding-left:8px;margin:2px 0}
+.dia-cta{font-size:10px;padding:5px 10px;border-radius:6px;display:inline-block;margin-top:2px;font-weight:600}
+
+/* Nivel consciencia colors */
+.nc-inconsciencia_total    { --nc:#7aaee0; }
+.nc-consciencia_emocional  { --nc:#9b7fe8; }
+.nc-consciencia_racional   { --nc:#c8a850; }
+.nc-consciencia_oportunidad{ --nc:#6dc87a; }
+.nc-consciencia_solucion_unica{ --nc:#c87a7a; }
+
+.dia-card.nc-inconsciencia_total     .dia-num{ background:rgba(122,174,224,.12);color:#7aaee0;border:1px solid rgba(122,174,224,.2) }
+.dia-card.nc-consciencia_emocional   .dia-num{ background:rgba(155,127,232,.12);color:#9b7fe8;border:1px solid rgba(155,127,232,.2) }
+.dia-card.nc-consciencia_racional    .dia-num{ background:rgba(200,168,80,.12);color:#c8a850;border:1px solid rgba(200,168,80,.2) }
+.dia-card.nc-consciencia_oportunidad .dia-num{ background:rgba(109,200,122,.12);color:#6dc87a;border:1px solid rgba(109,200,122,.2) }
+.dia-card.nc-consciencia_solucion_unica .dia-num{ background:rgba(200,122,122,.12);color:#c87a7a;border:1px solid rgba(200,122,122,.2) }
+
+.dia-card.nc-inconsciencia_total      .dia-titular{ border-color:#7aaee0 }
+.dia-card.nc-consciencia_emocional    .dia-titular{ border-color:#9b7fe8 }
+.dia-card.nc-consciencia_racional     .dia-titular{ border-color:#c8a850 }
+.dia-card.nc-consciencia_oportunidad  .dia-titular{ border-color:#6dc87a }
+.dia-card.nc-consciencia_solucion_unica .dia-titular{ border-color:#c87a7a }
+
+.formato-reel    { background:rgba(200,168,80,.1);border:1px solid rgba(200,168,80,.2);color:#c8a850 }
+.formato-carrusel{ background:rgba(155,127,232,.1);border:1px solid rgba(155,127,232,.2);color:#9b7fe8 }
+.formato-otro    { background:rgba(200,200,200,.07);border:1px solid var(--border2);color:var(--silver-dim) }
+
+.dia-cta-box { background:rgba(200,200,200,.04);border:1px solid var(--border);border-radius:6px;padding:6px 8px;font-size:10px;color:var(--text3);line-height:1.5 }
+.dia-cta-box span { color:var(--silver-dim) }
+
+/* Empty state */
+.empty-state{text-align:center;padding:80px 20px;color:var(--text3)}
+.empty-icon{font-size:48px;opacity:.3;margin-bottom:16px}
+.empty-title{font-size:14px;font-weight:600;color:var(--silver-faint);margin-bottom:8px}
+.empty-sub{font-size:11px;line-height:1.7;max-width:360px;margin:0 auto}
+.empty-sub code{background:var(--bg3);border:1px solid var(--border2);border-radius:4px;padding:1px 6px;font-size:10px;color:var(--silver-dim)}
+
+/* Legend */
+.leyenda{display:flex;flex-wrap:wrap;gap:8px;margin-bottom:20px}
+.leyenda-item{display:flex;align-items:center;gap:5px;font-size:10px;color:var(--text3)}
+.leyenda-dot{width:8px;height:8px;border-radius:50%}
+
+/* Print */
+@media print {
+  header .btn-back, header .btn-export { display:none }
+  body { background:#fff; color:#000 }
+  .dia-card { border:1px solid #ccc; break-inside:avoid }
+}
+
+/* Scrollbar */
+::-webkit-scrollbar{width:4px}
+::-webkit-scrollbar-track{background:transparent}
+::-webkit-scrollbar-thumb{background:#222;border-radius:2px}
+</style>
+</head>
+<body>
+
+<header>
+  <a href="cotizador-ismerely.html" class="logo-box">GOLLIAT<span class="logo-sub">WELLNESS</span></a>
+  <div class="hdr-title">
+    <h1>⚡ Estrategia de Contenido</h1>
+    <p>Generada por Trueno 4.0 · Semana piloto de 7 días</p>
+  </div>
+  <button class="btn-export" onclick="window.print()">🖨 Imprimir / PDF</button>
+  <a href="cotizador-ismerely.html" class="btn-back">← Volver</a>
+</header>
+
+<main>
+  <div id="empty-state" class="empty-state">
+    <div class="empty-icon">⚡</div>
+    <div class="empty-title">No hay estrategia generada</div>
+    <div class="empty-sub">
+      Regresa al Cotizador, abre <strong>Marca Personal</strong> (Trueno 4.0),
+      completa el Avatar y pide la Estrategia de 7 días.<br><br>
+      El sistema guardará los datos automáticamente y al hacer clic en
+      <code>✨ Ver Estrategia Visual</code> se mostrará aquí.
+    </div>
+  </div>
+
+  <div id="estrategia-wrap" style="display:none">
+    <div class="overview" id="overview"></div>
+    <div class="leyenda" id="leyenda"></div>
+    <div class="dias-grid" id="dias-grid"></div>
+  </div>
+</main>
+
+<script>
+const NC_LABELS = {
+  inconsciencia_total: 'Inconsciencia Total',
+  consciencia_emocional: 'Consciencia Emocional',
+  consciencia_racional: 'Consciencia Racional',
+  consciencia_oportunidad: 'Consciencia Oportunidad',
+  consciencia_solucion_unica: 'Solución Única',
+};
+const NC_COLORS = {
+  inconsciencia_total: '#7aaee0',
+  consciencia_emocional: '#9b7fe8',
+  consciencia_racional: '#c8a850',
+  consciencia_oportunidad: '#6dc87a',
+  consciencia_solucion_unica: '#c87a7a',
+};
+const PILAR_ICONS = { diferenciador:'💎', problema:'⚠️', resultado_deseado:'🎯' };
+const PROPOSITO_ICONS = { Viral:'🔥', Valor:'💡', Ventas:'💰', viral:'🔥', valor:'💡', ventas:'💰' };
+
+function ncKey(raw) {
+  return (raw || '').toLowerCase().replace(/\s+/g,'_').replace(/[áéíóú]/g, c => ({á:'a',é:'e',í:'i',ó:'o',ú:'u'}[c]||c));
+}
+
+function formatoBadge(fmt) {
+  const f = (fmt||'').toLowerCase();
+  if (f.includes('reel')) return '<span class="dia-formato-badge formato-reel">🎬 Reel</span>';
+  if (f.includes('carrusel') || f.includes('carousel')) return '<span class="dia-formato-badge formato-carrusel">▦ Carrusel</span>';
+  return `<span class="dia-formato-badge formato-otro">${fmt||'—'}</span>`;
+}
+
+function render(dias) {
+  // Overview pills
+  const reels = dias.filter(d => (d.formato||'').toLowerCase().includes('reel')).length;
+  const carruseles = dias.filter(d => (d.formato||'').toLowerCase().includes('carrusel')).length;
+  const overview = document.getElementById('overview');
+  overview.innerHTML = `
+    <div class="ov-pill"><div class="ov-pill-num">${dias.length}</div><div class="ov-pill-label">Días</div></div>
+    <div class="ov-pill"><div class="ov-pill-num" style="color:#c8a850">${reels}</div><div class="ov-pill-label">Reels</div></div>
+    <div class="ov-pill"><div class="ov-pill-num" style="color:#9b7fe8">${carruseles}</div><div class="ov-pill-label">Carruseles</div></div>
+    <div class="ov-pill"><div class="ov-pill-num" style="color:#6dc87a">${dias.filter(d=>d.proposito&&d.proposito.toLowerCase()==='ventas').length}</div><div class="ov-pill-label">Ventas</div></div>
+    <div class="ov-pill"><div class="ov-pill-num" style="color:#7aaee0">${dias.filter(d=>d.proposito&&d.proposito.toLowerCase()==='viral').length}</div><div class="ov-pill-label">Virales</div></div>
+  `;
+
+  // Legend
+  const ncUsed = [...new Set(dias.map(d => ncKey(d.nivel_consciencia)))];
+  const leyenda = document.getElementById('leyenda');
+  leyenda.innerHTML = ncUsed.map(k => `
+    <div class="leyenda-item">
+      <div class="leyenda-dot" style="background:${NC_COLORS[k]||'#888'}"></div>
+      ${NC_LABELS[k]||k}
+    </div>`).join('');
+
+  // Cards
+  const grid = document.getElementById('dias-grid');
+  grid.innerHTML = dias.map(dia => {
+    const nck = ncKey(dia.nivel_consciencia);
+    const ncLabel = NC_LABELS[nck] || dia.nivel_consciencia || '—';
+    const pilarIcon = PILAR_ICONS[dia.pilar] || '◆';
+    const propIcon = PROPOSITO_ICONS[dia.proposito] || '●';
+
+    return `
+      <div class="dia-card nc-${nck}">
+        <div class="dia-card-hdr">
+          <div class="dia-num">D${dia.dia}</div>
+          <div class="dia-info">
+            <div class="dia-titulo">${ncLabel}</div>
+            <div class="dia-subtitulo">${pilarIcon} ${dia.pilar||'—'} · ${propIcon} ${dia.proposito||'—'}</div>
+          </div>
+          ${formatoBadge(dia.formato)}
+        </div>
+        <div class="dia-card-body">
+          ${dia.idea_titular ? `<div class="dia-titular">${dia.idea_titular}</div>` : ''}
+          ${dia.insight_clave ? `
+          <div class="dia-row">
+            <div class="dia-row-icon">💡</div>
+            <div class="dia-row-content">
+              <div class="dia-row-label">Insight clave</div>
+              <div class="dia-row-value">${dia.insight_clave}</div>
+            </div>
+          </div>` : ''}
+          ${dia.tipo_narrativa ? `
+          <div class="dia-row">
+            <div class="dia-row-icon">🎭</div>
+            <div class="dia-row-content">
+              <div class="dia-row-label">Narrativa</div>
+              <div class="dia-row-value">${dia.tipo_narrativa}</div>
+            </div>
+          </div>` : ''}
+          ${dia.cta_sugerido ? `
+          <div class="dia-cta-box">🎯 CTA: <span>${dia.cta_sugerido}</span></div>` : ''}
+        </div>
+      </div>
+    `;
+  }).join('');
+}
+
+// Load from localStorage
+window.addEventListener('DOMContentLoaded', () => {
+  try {
+    const raw = localStorage.getItem('trueno_estrategia');
+    if (!raw) return;
+    const dias = JSON.parse(raw);
+    if (!Array.isArray(dias) || !dias.length) return;
+    document.getElementById('empty-state').style.display = 'none';
+    document.getElementById('estrategia-wrap').style.display = 'block';
+    render(dias);
+  } catch(e) {
+    console.error('Error parsing estrategia:', e);
+  }
+});
+</script>
+</body>
+</html>
